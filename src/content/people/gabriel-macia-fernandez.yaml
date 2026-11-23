@@ -1,0 +1,10 @@
+# Fuente: https://produccioncientifica.ugr.es/investigadores/354428/detalle
+name: Gabriel Maciá Fernández
+role: staff
+position: { en: Full Professor, es: Catedrático de Universidad }
+orcid: 0000-0001-9256-453X
+openalex: A5070751422
+lines: [intrusion-detection, data-processing] # TODO confirmar
+links:
+  scholar: https://scholar.google.com/citations?user=IhNRfoAAAAAJ
+order: 10

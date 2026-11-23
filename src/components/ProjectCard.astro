@@ -1,0 +1,36 @@
+---
+import { l, localize, useTranslations } from '@/i18n/utils';
+import type { Lang } from '@/i18n/ui';
+import { projectStatus, type Project } from '@/lib/data';
+
+interface Props { project: Project; lang: Lang }
+const { project, lang } = Astro.props;
+const t = useTranslations(lang);
+const d = project.data;
+const status = projectStatus(project);
+---
+
+<a class="card card--frame pcard" href={l(lang, `/projects/${project.id}/`)} data-type={d.type} data-status={status}>
+  <div class="pcard__top">
+    <span class="kicker">{t(`projects.${d.type}`)}</span>
+    <span class:list={['status', status === 'active' && 'status--active']}>{t(`projects.${status}`)}</span>
+  </div>
+  {d.logo && <img src={d.logo} alt="" class="pcard__logo" loading="lazy" />}
+  {d.acronym && <p class="pcard__acr">{d.acronym}</p>}
+  <h3>{localize(d.title, lang)}</h3>
+  {d.summary && <p class="small muted">{localize(d.summary, lang)}</p>}
+  <div class="pcard__meta">
+    {d.code && <code>{d.code}</code>}
+    <span>{d.start.getFullYear()}—{d.end?.getFullYear() ?? ''}</span>
+  </div>
+</a>
+
+<style>
+  .pcard { display: flex; flex-direction: column; min-height: 240px; }
+  .pcard__top { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+  .pcard__acr { margin: 1rem 0 0; font: 600 .85rem var(--font-mono); color: var(--accent); letter-spacing: .06em; }
+  .pcard h3 { font-size: 1.05rem; line-height: 1.3; margin-top: .5rem; }
+  .pcard__meta { margin-top: auto; padding-top: .9rem; border-top: 1px dashed var(--border); display: flex; justify-content: space-between; gap: .5rem; font: .72rem var(--font-mono); color: var(--muted); }
+  .pcard__meta code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pcard__logo { margin-top: 1rem; max-height: 48px; width: auto; }
+</style>

@@ -1,0 +1,23 @@
+# Fuente: https://produccioncientifica.ugr.es/proyectos/796142/detalle
+# Título oficial en inglés.
+# TODO: financiador (el portal no lo indica)
+# TODO: summary / description (el portal no trae resumen). Líneas asignadas por el título → confirmar.
+title:
+  en: CYBERACTIONING – Training cybersecurity skills through advanced higher education joint programmes
+acronym: CYBERACTIONING
+type: research
+code: '101123445'
+start: '2023-10-01'
+end: '2027-09-30'
+lines: []
+pi:
+- gabriel-macia-fernandez
+members:
+- pedro-garcia-teodoro
+- roberto-magan-carrion
+- jose-antonio-gomez-hernandez
+- margarita-robles-carrillo
+featured: true
+grantIds:
+- '101123445'
+source: https://produccioncientifica.ugr.es/proyectos/796142/detalle

@@ -1,0 +1,45 @@
+---
+/** News, Events & Awards: repositorio único filtrable (Propuesta §3). */
+import Base from '@/layouts/Base.astro';
+import NewsCard from '@/components/NewsCard.astro';
+import { langPaths, useTranslations } from '@/i18n/utils';
+import type { Lang } from '@/i18n/ui';
+import { getNews } from '@/lib/data';
+
+export const getStaticPaths = langPaths;
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const news = await getNews(lang);
+const kinds = ['news', 'event', 'award'] as const;
+---
+
+<Base lang={lang} title={t('nav.news')} searchable={false}>
+  <div class="container section">
+    <p class="section-head__idx">// NEWS</p>
+    <h1>{t('nav.news')}</h1>
+    <div class="filters">
+      <div class="tabs" role="group" data-kind-filter>
+        <button class="btn btn--ghost" aria-pressed="true" data-kind="">{t('news.all')}</button>
+        {kinds.map((k) => <button class="btn btn--ghost" aria-pressed="false" data-kind={k}>{t(`news.${k}`)}</button>)}
+      </div>
+      <label class="visually-hidden" for="news-q">{t('nav.search')}</label>
+      <input id="news-q" type="search" placeholder={t('news.search')} data-news-q />
+    </div>
+    <div class="grid" data-news>{news.map((n) => <NewsCard item={n} lang={lang} />)}</div>
+  </div>
+</Base>
+
+<script>
+  const cards = [...document.querySelectorAll<HTMLElement>('[data-news] > [data-kind]')];
+  const q = document.querySelector<HTMLInputElement>('[data-news-q]')!;
+  const group = document.querySelector('[data-kind-filter]')!;
+  let kind = new URLSearchParams(location.search).get('kind') ?? '';
+  const apply = () => {
+    group.querySelectorAll<HTMLElement>('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.kind === kind)));
+    const text = q.value.trim().toLowerCase();
+    cards.forEach((c) => (c.hidden = !((!kind || c.dataset.kind === kind) && (!text || c.dataset.text!.includes(text)))));
+  };
+  group.addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest('button'); if (b) { kind = b.dataset.kind ?? ''; apply(); } });
+  q.addEventListener('input', apply);
+  apply();
+</script>

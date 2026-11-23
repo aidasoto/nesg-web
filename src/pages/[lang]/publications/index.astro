@@ -1,0 +1,55 @@
+---
+import Base from '@/layouts/Base.astro';
+import PubsExplorer from '@/components/PubsExplorer.astro';
+import YearStack from '@/components/charts/YearStack.astro';
+import Composition from '@/components/charts/Composition.astro';
+import BarList from '@/components/charts/BarList.astro';
+import { formatDate, l, langPaths, localize, useTranslations } from '@/i18n/utils';
+import type { Lang } from '@/i18n/ui';
+import { getLines, getPeople, getPublications, pubsByLine, pubsByPerson, stats } from '@/lib/data';
+
+export const getStaticPaths = langPaths;
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const [pubs, people, lines] = await Promise.all([getPublications(), getPeople(), getLines()]);
+const unit = lang === 'es' ? 'publicaciones' : 'publications';
+const lineRows = lines.map((ln) => ({ label: localize(ln.data.title, lang), value: pubsByLine(pubs, ln.id).length, href: l(lang, `/publications/?line=${ln.id}`) }));
+const personRows = people.map((p) => ({ label: p.data.name, value: pubsByPerson(pubs, p.id).length, href: l(lang, `/publications/?author=${p.id}`) }))
+  .filter((r) => r.value > 0).sort((a, b) => b.value - a.value);
+const oaPct = pubs.length ? Math.round((stats.openAccess / pubs.length) * 100) : 0;
+const years = pubs.map((p) => p.data.year);
+---
+
+<Base lang={lang} title={t('nav.publications')} searchable={false}>
+  <section class="section--tight surface-dark bg-grid">
+    <div class="container">
+      <div class="section-head">
+        <div><span class="section-head__idx">// {t('nav.publications')}</span><h1>{t('nav.publications')}</h1></div>
+        <a href={l(lang, '/publications/resources/')}>{t('nav.resources')} →</a>
+      </div>
+      <div class="stats reveal">
+        <div class="stat"><span class="stat__value" data-countup={pubs.length}>{pubs.length}</span><span class="stat__label">{t('home.stats.publications')}</span></div>
+        <div class="stat"><span class="stat__value" data-countup={stats.citations}>{stats.citations.toLocaleString(lang === 'es' ? 'es-ES' : 'en-GB')}</span><span class="stat__label">{t('home.stats.citations')}</span></div>
+        <div class="stat"><span class="stat__value" data-countup={oaPct} data-countup-suffix="%">{oaPct}%</span><span class="stat__label">{t('link.oa')}</span></div>
+        <div class="stat"><span class="stat__value">{years.length ? `${Math.min(...years)}–${String(Math.max(...years)).slice(2)}` : '—'}</span><span class="stat__label">{t('pubs.year')}</span></div>
+      </div>
+      <div class="pub-charts">
+        <YearStack pubs={pubs} lang={lang} title={`${t('charts.perYearType')} · ${lang === 'es' ? 'clic para filtrar' : 'click to filter'}`} filterTarget="[data-pubs-form] select[name=year]" />
+        <Composition pubs={pubs} lang={lang} title={t('charts.composition')} />
+        <BarList rows={lineRows} title={t('charts.byLine')} unit={unit} />
+        <BarList rows={personRows} title={t('charts.byPerson')} unit={unit} color="var(--s3)" />
+      </div>
+    </div>
+  </section>
+  <section class="section surface-light">
+    <div class="container">
+      <PubsExplorer pubs={pubs} people={people} lines={lines} lang={lang} />
+      <p class="kicker">{t('pubs.updated')}: {formatDate(stats.generatedAt, lang)} · OpenAlex</p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .pub-charts { display: grid; gap: 1rem; margin-top: 1rem; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+  @media (max-width: 900px) { .pub-charts { grid-template-columns: 1fr; } }
+</style>

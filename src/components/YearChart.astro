@@ -1,0 +1,35 @@
+---
+/**
+ * Barras de publicaciones por año, como SVG generado en build (cero JS).
+ * Si se quieren gráficas interactivas (filtros, tooltips), sustituir por una
+ * isla con Observable Plot leyendo src/data/generated/stats.json.
+ */
+interface Props { data: Record<string, number>; label: string }
+const { data, label } = Astro.props;
+const entries = Object.entries(data);
+const max = Math.max(1, ...entries.map(([, v]) => v));
+const bw = 28, gap = 8, h = 120;
+const width = entries.length * (bw + gap);
+---
+
+<figure class="yc">
+  <svg viewBox={`0 0 ${width} ${h + 20}`} role="img" aria-label={label} preserveAspectRatio="xMinYMax meet">
+    <title>{label}</title>
+    {entries.map(([year, v], i) => {
+      const bh = (v / max) * h;
+      const x = i * (bw + gap);
+      return (
+        <g>
+          <rect x={x} y={h - bh} width={bw} height={bh} rx="3" fill="var(--accent)"><title>{year}: {v}</title></rect>
+          <text x={x + bw / 2} y={h + 14} text-anchor="middle" font-size="9" fill="var(--muted)">{year.slice(2)}</text>
+        </g>
+      );
+    })}
+  </svg>
+  <figcaption class="small muted">{label}</figcaption>
+</figure>
+
+<style>
+  .yc { margin: 0; max-width: 520px; }
+  .yc svg { width: 100%; height: auto; }
+</style>

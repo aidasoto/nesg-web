@@ -1,0 +1,48 @@
+---
+/** Una publicación en un listado. Los autores del grupo enlazan a su perfil. */
+import { l, useTranslations } from '@/i18n/utils';
+import type { Lang, UIKey } from '@/i18n/ui';
+import type { Publication } from '@/lib/data';
+import { TYPE_GROUPS, typeGroup } from '@/lib/charts';
+
+interface Props { pub: Publication; lang: Lang; tag?: 'li' | 'div'; attrs?: Record<string, string | number> }
+const { pub, lang, tag: Tag = 'li', attrs = {} } = Astro.props;
+const t = useTranslations(lang);
+const d = pub.data;
+const color = TYPE_GROUPS.find((g) => g.id === typeGroup(d.type))!.color;
+---
+
+<Tag class="pub" {...attrs}>
+  <div class="pub__year">{d.year}</div>
+  <div class="pub__main">
+    <span class="pub__type"><i style={`background:${color}`}></i>{t(`pubtype.${d.type}` as UIKey)}{d.openAccess && <span class="pub__oa">OA</span>}</span>
+    <h3 class="pub__title"><a href={l(lang, `/publications/${pub.id}/`)}>{d.title}</a></h3>
+    <p class="pub__authors">
+      {d.authors.map((a, i) => (
+        <>
+          {a.person ? <a href={l(lang, `/team/${a.person.id}/`)}>{a.name}</a> : <span>{a.name}</span>}
+          {i < d.authors.length - 1 && ', '}
+        </>
+      ))}
+    </p>
+    {d.venue && <p class="pub__venue">{d.venue}</p>}
+  </div>
+  <div class="pub__cites" title={`${d.citations} ${t('pubs.citations')}`}>{d.citations > 0 && <>{d.citations}<small>{t('pubs.citations')}</small></>}</div>
+</Tag>
+
+<style>
+  .pub { display: grid; grid-template-columns: 3.5rem 1fr auto; gap: 1rem; padding: 1.1rem 0; border-bottom: 1px solid var(--border); }
+  .pub__year { font: 600 .85rem var(--font-mono); color: var(--accent); padding-top: .15rem; }
+  .pub__type { display: inline-flex; align-items: center; gap: .45rem; font: 500 .66rem var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+  .pub__type i { width: 8px; height: 8px; border-radius: 2px; }
+  .pub__oa { margin-left: .4rem; padding: .1rem .35rem; border: 1px solid var(--border); border-radius: 4px; }
+  .pub__title { font: 500 1.02rem/1.35 var(--font-body); letter-spacing: 0; margin: .35rem 0 .3rem; }
+  .pub__title a { color: var(--fg-strong); text-decoration: none; }
+  .pub__title a:hover { color: var(--accent); }
+  .pub__authors { margin: 0; font-size: .85rem; color: var(--muted); }
+  .pub__authors a { color: var(--fg); text-decoration-color: var(--accent); }
+  .pub__venue { margin: .2rem 0 0; font: italic .82rem var(--font-body); color: var(--muted); }
+  .pub__cites { text-align: right; font: 600 1rem var(--font-mono); color: var(--fg-strong); min-width: 3rem; }
+  .pub__cites small { display: block; font: 500 .58rem var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+  @media (max-width: 600px) { .pub { grid-template-columns: 1fr; gap: .3rem; } .pub__cites { text-align: left; } .pub__cites small { display: inline; margin-left: .3rem; } }
+</style>

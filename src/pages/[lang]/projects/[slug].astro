@@ -1,0 +1,148 @@
+---
+/** Ficha de proyecto (nodo central): hoja técnica, avance, cronograma, equipo y resultados automáticos. */
+import { getEntries } from 'astro:content';
+import Base from '@/layouts/Base.astro';
+import PageBar from '@/components/PageBar.astro';
+import PersonCard from '@/components/PersonCard.astro';
+import PubItem from '@/components/PubItem.astro';
+import YearStack from '@/components/charts/YearStack.astro';
+import Timeline from '@/components/charts/Timeline.astro';
+import { formatDate, l, langs, localize, md, useTranslations } from '@/i18n/utils';
+import type { Lang } from '@/i18n/ui';
+import { getPeople, getProjects, getPublications, neighbours, projectStatus, projectTeam, pubsByProject } from '@/lib/data';
+
+export async function getStaticPaths() {
+  const projects = await getProjects();
+  return langs.flatMap((lang) => projects.map((project) => ({ params: { lang, slug: project.id }, props: { project } })));
+}
+const { project } = Astro.props;
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const d = project.data;
+
+const [projects, people, pubs, lines, partners] = await Promise.all([
+  getProjects(), getPeople(), getPublications(), getEntries(d.lines), getEntries(d.partners),
+]);
+const nb = neighbours(projects, project.id);
+const team = projectTeam(people, project);
+const piIds = new Set(d.pi.map((r) => r.id));
+team.sort((a, b) => Number(piIds.has(b.id)) - Number(piIds.has(a.id)));
+const results = pubsByProject(pubs, project.id);
+const status = projectStatus(project);
+const title = localize(d.title, lang);
+const name = (p: typeof project) => p.data.acronym ?? localize(p.data.title, lang);
+
+// Avance temporal
+const now = Date.now();
+const end = d.end ?? new Date();
+const months = Math.max(1, Math.round((+end - +d.start) / (30.44 * 864e5)));
+const progress = Math.min(100, Math.max(0, ((now - +d.start) / (+end - +d.start)) * 100));
+const remaining = Math.max(0, Math.round((+end - now) / (30.44 * 864e5)));
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ResearchProject',
+  name: title,
+  alternateName: d.acronym,
+  identifier: d.code,
+  description: d.summary ? localize(d.summary, lang) : undefined,
+  funder: d.funder ? { '@type': 'Organization', name: d.funder } : undefined,
+  startDate: d.start.toISOString().slice(0, 10),
+  endDate: d.end?.toISOString().slice(0, 10),
+  url: d.url,
+};
+---
+
+<Base lang={lang} title={d.acronym ? `${d.acronym} – ${title}` : title} description={d.summary ? localize(d.summary, lang) : undefined} jsonLd={jsonLd} surface="light">
+  <PageBar
+    lang={lang}
+    crumbs={[{ label: t('nav.projects'), href: l(lang, '/projects/') }, { label: t(`projects.${d.type}`), href: l(lang, `/projects/${d.type}/`) }, { label: d.acronym ?? d.code ?? title }]}
+    prev={{ label: name(nb.prev), href: l(lang, `/projects/${nb.prev.id}/`) }}
+    next={{ label: name(nb.next), href: l(lang, `/projects/${nb.next.id}/`) }}
+    index={[nb.index, nb.total]}
+  />
+
+  <article class="container project-page">
+    <header class="prh">
+      <div class="prh__top">
+        <span class:list={['status', status === 'active' && 'status--active']}>{t(`projects.${status}`)}</span>
+        {d.code && <code class="prh__code">{d.code}</code>}
+      </div>
+      {d.logo && <img src={d.logo} alt="" class="prh__logo" />}
+      {d.acronym && <p class="prh__acr">{d.acronym}</p>}
+      <h1>{title}</h1>
+    </header>
+
+    <div class="prgrid">
+      <dl class="spec">
+        <div><dt>{t('projects.code')}</dt><dd><code>{d.code ?? '—'}</code></dd></div>
+        <div><dt>{t('projects.funder')}</dt><dd>{d.funder ?? '—'}{d.call && ` · ${d.call}`}</dd></div>
+        <div><dt>{t('projects.dates')}</dt><dd>{formatDate(d.start, lang)} → {d.end ? formatDate(d.end, lang) : '…'}</dd></div>
+        <div><dt>{lang === 'es' ? 'Duración' : 'Duration'}</dt><dd>{months} {lang === 'es' ? 'meses' : 'months'}</dd></div>
+        <div><dt>{t('projects.area')}</dt><dd>{lines.length ? lines.map((ln) => <a class="tag" href={l(lang, `/research-lines/${ln.id}/`)}>{localize(ln.data.title, lang)}</a>) : '—'}</dd></div>
+        {partners.length > 0 && <div><dt>{t('projects.partners')}</dt><dd>{partners.map((p) => p.data.name).join(', ')}</dd></div>}
+        {d.url && <div><dt>{t('projects.website')}</dt><dd><a href={d.url} rel="noopener">{d.url}</a></dd></div>}
+        {d.source && <div><dt>{lang === 'es' ? 'Fuente' : 'Source'}</dt><dd><a href={d.source} rel="noopener">produccioncientifica.ugr.es ↗</a></dd></div>}
+      </dl>
+
+      <figure class="viz prog">
+        <figcaption class="viz__head"><span class="kicker">{t('charts.progress')}</span><span class="kicker">{progress.toFixed(0)}%</span></figcaption>
+        <div class="prog__track" role="img" aria-label={`${t('charts.progress')}: ${progress.toFixed(0)}%`}>
+          <span class="prog__bar" style={`width:${progress}%`}></span>
+          {[25, 50, 75].map((m) => <i style={`left:${m}%`}></i>)}
+        </div>
+        <div class="prog__dates kicker"><span>{d.start.getFullYear()}</span><span>{end.getFullYear()}</span></div>
+        <div class="stats prog__stats">
+          <div class="stat"><span class="stat__value">{team.length}</span><span class="stat__label">{lang === 'es' ? 'investigadores' : 'researchers'}</span></div>
+          <div class="stat"><span class="stat__value">{results.length}</span><span class="stat__label">{t('team.publications')}</span></div>
+          <div class="stat"><span class="stat__value">{status === 'active' ? remaining : months}</span><span class="stat__label">{status === 'active' ? (lang === 'es' ? 'meses restantes' : 'months left') : (lang === 'es' ? 'meses' : 'months')}</span></div>
+        </div>
+      </figure>
+    </div>
+
+    {(d.description || d.summary) && <div class="prose block" set:html={md(localize(d.description ?? d.summary, lang))} />}
+
+    {team.length > 0 && (
+      <section class="block">
+        <div class="section-head"><div><span class="section-head__idx">01</span><h2>{t('projects.team')}</h2></div></div>
+        <div class="grid">{team.map((p) => <PersonCard person={p} lang={lang} compact note={piIds.has(p.id) ? (lang === 'es' ? 'IP' : 'PI') : undefined} />)}</div>
+      </section>
+    )}
+
+    {results.length > 0 && (
+      <section class="block">
+        <div class="section-head"><div><span class="section-head__idx">02</span><h2>{t('projects.results')} <span class="muted">({results.length})</span></h2></div></div>
+        {results.length >= 3 && <YearStack pubs={results} lang={lang} title={t('charts.perYearType')} height={180} />}
+        <ul class="list-plain">{results.map((pub) => <PubItem pub={pub} lang={lang} />)}</ul>
+      </section>
+    )}
+
+    <section class="block">
+      <div class="section-head"><div><span class="section-head__idx">0{results.length ? 3 : team.length ? 2 : 1}</span><h2>{t('charts.timeline')}</h2></div></div>
+      <Timeline projects={projects} lang={lang} title={lang === 'es' ? 'Este proyecto en el contexto del grupo' : 'This project in the group context'} highlight={project.id} />
+    </section>
+
+    <a class="back" href={l(lang, '/projects/')}>← {t('common.back')}</a>
+  </article>
+</Base>
+
+<style>
+  .project-page { padding-bottom: 5rem; }
+  .prh { padding: 2.5rem 0 2rem; max-width: 60rem; }
+  .prh__top { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+  .prh__code { font: 500 .75rem var(--font-mono); color: var(--muted); border: 1px solid var(--border); border-radius: 6px; padding: .3rem .5rem; }
+  .prh__acr { font: 600 1rem var(--font-mono); color: var(--accent); letter-spacing: .08em; margin: 1.5rem 0 0; }
+  .prh h1 { font-size: clamp(1.8rem, 3.6vw, 2.8rem); margin-top: .5rem; }
+  .prh__logo { margin-top: 1rem; max-height: 64px; width: auto; }
+  .prgrid { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; }
+  @media (max-width: 900px) { .prgrid { grid-template-columns: 1fr; } }
+  .prog__track { position: relative; height: 14px; border-radius: 4px; background: var(--bg-alt); overflow: hidden; }
+  .prog__bar { position: absolute; inset: 0 auto 0 0; background: repeating-linear-gradient(-45deg, var(--s1) 0 8px, color-mix(in srgb, var(--s1) 80%, white) 8px 10px); border-radius: 0 4px 4px 0; transform-origin: left; transform: scaleX(0); transition: transform 1.2s var(--ease); }
+  :global(.viz.is-in) .prog__bar { transform: none; }
+  .prog__track i { position: absolute; top: 0; bottom: 0; border-left: 1px dashed var(--border); }
+  .prog__dates { display: flex; justify-content: space-between; margin: .5rem 0 1.25rem; }
+  .prog__stats { grid-template-columns: repeat(3, 1fr); }
+  .prog__stats .stat { padding: .9rem 1rem; }
+  .prog__stats .stat__value { font-size: 1.8rem; }
+  .block { margin-top: 4rem; }
+</style>

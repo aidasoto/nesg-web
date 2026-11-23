@@ -1,0 +1,27 @@
+# Fuente: https://produccioncientifica.ugr.es/proyectos/796134/detalle
+# Título oficial en español; el inglés es traducción → revisar.
+# TODO: summary / description (el portal no trae resumen). Líneas asignadas por el título → confirmar.
+title:
+  en: 'CiberUGR Chair: agreement between the University of Granada and INCIBE to promote cybersecurity chairs in Spain'
+  es: 'Cátedra CiberUGR: convenio entre la Universidad de Granada e INCIBE para la promoción de cátedras de ciberseguridad en España'
+acronym: CiberUGR
+type: transfer
+code: C025/24
+funder: INCIBE · Plan de Recuperación, Transformación y Resiliencia – NextGenerationEU
+start: '2024-03-11'
+end: '2025-12-31'
+lines: []
+pi:
+- pedro-garcia-teodoro
+members:
+- gabriel-macia-fernandez
+- roberto-magan-carrion
+- jose-antonio-gomez-hernandez
+- margarita-robles-carrillo
+- elvira-castillo-fernandez
+- felipe-gonzalez-lopez
+- irene-gosalvez-white
+featured: true
+grantIds:
+- C025/24
+source: https://produccioncientifica.ugr.es/proyectos/796134/detalle

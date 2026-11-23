@@ -1,0 +1,46 @@
+{
+ "generatedAt": "2026-11-22T18:41:52+00:00",
+ "total": 148,
+ "citations": 2865,
+ "openAccess": 69,
+ "byYear": {
+  "2012": 6,
+  "2013": 11,
+  "2014": 9,
+  "2015": 10,
+  "2016": 12,
+  "2017": 10,
+  "2018": 10,
+  "2019": 13,
+  "2020": 8,
+  "2021": 16,
+  "2022": 10,
+  "2023": 6,
+  "2024": 10,
+  "2025": 8,
+  "2026": 9
+ },
+ "byType": {
+  "journal-article": 85,
+  "conference-paper": 28,
+  "book-chapter": 23,
+  "other": 7,
+  "book": 2,
+  "preprint": 1,
+  "dataset": 1,
+  "thesis": 1
+ },
+ "byLine": {
+  "intrusion-detection": 89,
+  "cyberlaw": 43,
+  "data-processing": 35,
+  "ethical-hacking": 14
+ },
+ "byPerson": {
+  "margarita-robles-carrillo": 54,
+  "pedro-garcia-teodoro": 51,
+  "gabriel-macia-fernandez": 45,
+  "roberto-magan-carrion": 42,
+  "jose-antonio-gomez-hernandez": 11
+ }
+}

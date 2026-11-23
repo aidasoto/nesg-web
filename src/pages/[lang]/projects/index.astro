@@ -1,0 +1,20 @@
+---
+import Base from '@/layouts/Base.astro';
+import ProjectsExplorer from '@/components/ProjectsExplorer.astro';
+import { langPaths, useTranslations } from '@/i18n/utils';
+import type { Lang } from '@/i18n/ui';
+import { getProjects } from '@/lib/data';
+
+export const getStaticPaths = langPaths;
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const projects = await getProjects();
+---
+
+<Base lang={lang} title={t('nav.projects')}>
+  <div class="container section">
+    <p class="section-head__idx">// PROJECTS</p>
+    <h1>{t('nav.projects')}</h1>
+    <ProjectsExplorer projects={projects} lang={lang} />
+  </div>
+</Base>

@@ -1,0 +1,22 @@
+# Fuente: https://produccioncientifica.ugr.es/proyectos/263197/detalle
+# Título oficial en español; el inglés es traducción → revisar.
+# TODO: summary / description (el portal no trae resumen). Líneas asignadas por el título → confirmar.
+title:
+  en: Dynamic security management of mobile devices
+  es: Gestión dinámica de seguridad de dispositivos móviles
+type: research
+code: TIN2017-83494-R
+funder: Agencia Estatal de Investigación (MICIU/AEI)
+start: '2018-01-01'
+end: '2021-09-30'
+lines:
+- intrusion-detection
+pi:
+- pedro-garcia-teodoro
+members:
+- gabriel-macia-fernandez
+- jose-antonio-gomez-hernandez
+- margarita-robles-carrillo
+grantIds:
+- TIN2017-83494-R
+source: https://produccioncientifica.ugr.es/proyectos/263197/detalle

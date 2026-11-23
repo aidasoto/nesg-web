@@ -1,0 +1,85 @@
+---
+/**
+ * Índice de secciones fijo bajo el menú (misma forma que la barra de ficha).
+ * - Modo "anchors" (por defecto): enlaces a #id con resaltado de la sección visible.
+ * - Modo "filter": botones que filtran elementos [data-filter-item] por data-role.
+ */
+interface Item { id: string; label: string; count?: number }
+interface Props { items: Item[]; label: string; mode?: 'anchors' | 'filter'; allLabel?: string; total?: number }
+const { items, label, mode = 'anchors', allLabel, total } = Astro.props;
+---
+
+<div class="snav-wrap" data-snav={mode}>
+  <div class="container">
+    <nav class="snav" aria-label={label}>
+      <span class="snav__label">{label}</span>
+      <ul class="snav__list">
+        {mode === 'filter' && (
+          <li><button type="button" class="snav__item" aria-pressed="true" data-filter="">{allLabel}{total !== undefined && <small>{total}</small>}</button></li>
+        )}
+        {items.map((it) => (
+          <li>
+            {mode === 'filter'
+              ? <button type="button" class="snav__item" aria-pressed="false" data-filter={it.id}>{it.label}{it.count !== undefined && <small>{it.count}</small>}</button>
+              : <a class="snav__item" href={`#${it.id}`}>{it.label}{it.count !== undefined && <small>{it.count}</small>}</a>}
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<style>
+  .snav-wrap { position: sticky; top: var(--header-h); z-index: 20; padding: .75rem 0; pointer-events: none; }
+  .snav { pointer-events: auto; }
+  .snav { display: flex; align-items: center; gap: 1rem; min-height: 52px; padding: .35rem .4rem .35rem 1.2rem; background: var(--card); border: 1px solid var(--border); border-radius: 999px; box-shadow: 0 6px 20px rgba(0, 0, 0, .06); }
+  .snav__label { flex: none; font: 500 .68rem var(--font-mono); text-transform: uppercase; letter-spacing: .12em; color: var(--accent); }
+  .snav__list { list-style: none; margin: 0; padding: 0; display: flex; gap: .3rem; overflow-x: auto; scrollbar-width: none; }
+  .snav__list::-webkit-scrollbar { display: none; }
+  .snav__item {
+    display: inline-flex; align-items: center; gap: .45rem; white-space: nowrap;
+    padding: .55rem .95rem; border-radius: 999px; border: 1px solid transparent; background: none; cursor: pointer;
+    font: 500 .72rem/1 var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); text-decoration: none;
+    transition: background .2s, color .2s, border-color .2s;
+  }
+  .snav__item:hover { color: var(--fg-strong); border-color: var(--border); }
+  .snav__item small { font-size: .65rem; padding: .15rem .4rem; border-radius: 999px; background: var(--bg-alt); color: var(--fg); }
+  .snav__item[aria-current='true'], .snav__item[aria-pressed='true'] { background: var(--accent-strong); color: var(--accent-fg); }
+  .snav__item[aria-current='true'] small, .snav__item[aria-pressed='true'] small { background: rgba(255, 255, 255, .2); color: inherit; }
+  @media (max-width: 720px) { .snav__label { display: none; } .snav { padding-left: .4rem; } }
+</style>
+
+<script>
+  // Anclas: resalta la sección visible
+  document.querySelectorAll<HTMLElement>('[data-snav="anchors"]').forEach((wrap) => {
+    const links = [...wrap.querySelectorAll<HTMLAnchorElement>('a.snav__item')];
+    const targets = links.map((a) => document.getElementById(a.hash.slice(1))).filter(Boolean) as HTMLElement[];
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        links.forEach((a) => a.setAttribute('aria-current', String(a.hash === `#${e.target.id}`)));
+        links.find((a) => a.hash === `#${e.target.id}`)?.scrollIntoView({ block: 'nearest', inline: 'center' });
+      }
+    }, { rootMargin: '-40% 0px -55% 0px' });
+    targets.forEach((t) => io.observe(t));
+  });
+
+  // Filtro: muestra solo los [data-filter-item] cuyo data-role coincide; estado en ?role=
+  document.querySelectorAll<HTMLElement>('[data-snav="filter"]').forEach((wrap) => {
+    const btns = [...wrap.querySelectorAll<HTMLButtonElement>('[data-filter]')];
+    const items = [...document.querySelectorAll<HTMLElement>('[data-filter-item]')];
+    const apply = (role: string) => {
+      btns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === role)));
+      items.forEach((el) => (el.hidden = !!role && el.dataset.role !== role));
+      document.body.dataset.filtered = role ? 'true' : 'false';
+      const url = new URL(location.href);
+      role ? url.searchParams.set('role', role) : url.searchParams.delete('role');
+      history.replaceState(null, '', url);
+    };
+    wrap.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-filter]');
+      if (b) apply(b.dataset.filter ?? '');
+    });
+    apply(new URLSearchParams(location.search).get('role') ?? '');
+  });
+</script>

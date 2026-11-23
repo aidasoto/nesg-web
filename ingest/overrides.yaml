@@ -1,0 +1,29 @@
+# Válvula de revisión humana. Se aplica DESPUÉS de la descarga automática.
+# Las publicaciones se identifican por DOI ("10.1234/abc") o id de OpenAlex ("W123...").
+
+# Falsos positivos (homónimos, trabajos que no son del grupo...)
+exclude: []
+#  - 10.0000/falso-positivo
+
+# Mapear autores de OpenAlex a miembros cuando no tienen ORCID en el paper
+# (id de autor de OpenAlex → id de persona en src/content/people)
+authors: {}
+#  A5000000000: ana-ejemplo
+
+# Correcciones y enriquecimiento por publicación (se fusiona sobre el registro)
+patch: {}
+#  10.0000/ejemplo:
+#    lines: [intrusion-detection]
+#    projects: [secnet-ai]
+#    links: { code: https://github.com/..., dataset: https://zenodo.org/... }
+#    type: conference-paper
+#    slug: un-slug-mas-corto
+
+# Papers que no están en ninguna fuente: registro completo a mano
+manual: []
+#  - title: ...
+#    year: 2024
+#    type: book-chapter
+#    venue: ...
+#    authors: [{ name: Ana Ejemplo, person: ana-ejemplo }]
+#    links: { pdf: https://... }

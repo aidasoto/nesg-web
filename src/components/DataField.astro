@@ -1,0 +1,143 @@
+---
+/**
+ * Fondo animado del hero: malla de puntos que simula tráfico de datos.
+ * - Ondas de intensidad + barrido tipo radar.
+ * - "Paquetes" que recorren filas dejando estela y generan pulsos al llegar a un nodo.
+ * - El cursor actúa como lente; el scroll (--p del hero) dispersa la malla.
+ * Respeta prefers-reduced-motion (un solo fotograma) y se pausa fuera de pantalla.
+ */
+---
+
+<canvas class="datafield" data-datafield aria-hidden="true"></canvas>
+
+<style>
+  .datafield { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+</style>
+
+<script>
+  type Packet = { row: number; x: number; speed: number; dir: 1 | -1 };
+  type Pulse = { x: number; y: number; r: number; a: number };
+
+  const canvas = document.querySelector<HTMLCanvasElement>('[data-datafield]');
+  if (canvas) {
+    const ctx = canvas.getContext('2d')!;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Zoom de la animación: todo (malla, puntos, paquetes, lente) se escala con Z
+    const ZOOM_DESKTOP = 1, ZOOM_MOBILE = 1; // 1 = tamaño original
+    let Z = ZOOM_DESKTOP, GAP = 22 * Z;
+    let w = 0, h = 0, cols = 0, rows = 0, dpr = 1;
+    let accent = '#3cc4b4', base = '#e6ecea', light = false;
+    let packets: Packet[] = [];
+    const pulses: Pulse[] = [];
+    const mouse = { x: -9999, y: -9999 };
+    let running = true, raf = 0, t0 = performance.now(), last = performance.now(), parked = false;
+
+    const readColors = () => {
+      const cs = getComputedStyle(canvas);
+      accent = cs.getPropertyValue('--accent').trim() || accent;
+      base = cs.getPropertyValue('--fg').trim() || base;
+      light = document.documentElement.dataset.theme === 'light';
+    };
+
+    const resize = () => {
+      const r = canvas.getBoundingClientRect();
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = r.width; h = r.height;
+      canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      Z = w < 720 ? ZOOM_MOBILE : ZOOM_DESKTOP; GAP = 22 * Z;
+      cols = Math.ceil(w / GAP) + 1; rows = Math.ceil(h / GAP) + 1;
+      packets = Array.from({ length: Math.round(rows * 0.45) }, () => newPacket());
+    };
+
+    const newPacket = (): Packet => {
+      const dir = Math.random() < 0.5 ? 1 : -1;
+      return { row: Math.floor(Math.random() * rows), x: dir === 1 ? -Math.random() * w : w + Math.random() * w, speed: (60 + Math.random() * 160) * Z, dir };
+    };
+
+    const hexA = (hex: string, a: number) => {
+      const m = hex.replace('#', '');
+      const n = parseInt(m.length === 3 ? m.split('').map((c) => c + c).join('') : m, 16);
+      return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a.toFixed(3)})`;
+    };
+
+    // Progreso de scroll del hero: 0 arriba, 1 cuando el contenido lo ha tapado
+    const scrollP = () => Math.min(1, Math.max(0, window.scrollY / (window.innerHeight * 0.9)));
+
+    const frame = (now: number) => {
+      const t = (now - t0) / 1000;
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      const p = scrollP();
+      ctx.clearRect(0, 0, w, h);
+      // Totalmente tapado por el contenido: aparcar hasta que se vuelva a ver
+      if (p >= 0.999) { parked = true; running = false; return; }
+
+      const sweep = ((t * 0.12) % 1.4) * w - 0.2 * w; // barrido vertical
+      const cx = w / 2, cy = h / 2;
+      for (let i = 0; i < cols; i++) {
+        for (let j = 0; j < rows; j++) {
+          let x = i * GAP, y = j * GAP;
+          // dispersión con el scroll: los puntos se separan del centro
+          if (p > 0) { x += (x - cx) * p * 0.35; y += (y - cy) * p * 0.35 - p * 60; }
+          const wave = Math.sin(i * 0.18 + t * 0.7) * Math.cos(j * 0.21 - t * 0.5) + Math.sin((i + j) * 0.09 + t * 0.35);
+          let a = 0.07 + Math.max(0, wave) * 0.2;
+          const ds = Math.abs(x - sweep);
+          if (ds < 120 * Z) a += (1 - ds / (120 * Z)) * 0.22;
+          const dm = Math.hypot(x - mouse.x, y - mouse.y);
+          // Lente del cursor. En modo claro, teal oscuro sobre gris claro: necesita más opacidad
+          const lens = dm < 140 * Z ? 1 - dm / (140 * Z) : 0;
+          a += lens * (light ? 0.85 : 0.55);
+          a *= 1 - p * 0.85;
+          const strong = a > 0.32;
+          ctx.fillStyle = strong ? hexA(accent, Math.min(a + 0.15, 0.95)) : hexA(base, a);
+          const s = (strong ? (light ? 2.4 + lens * 0.8 : 2.2) : 1.4) * Z;
+          ctx.fillRect(x - s / 2, y - s / 2, s, s);
+        }
+      }
+
+      // paquetes con estela
+      for (const pk of packets) {
+        pk.x += pk.speed * pk.dir * dt;
+        const y = pk.row * GAP;
+        for (let k = 0; k < 8; k++) {
+          const x = pk.x - pk.dir * k * GAP * 0.5;
+          ctx.fillStyle = hexA(accent, (0.9 - k * 0.11) * (1 - p));
+          const s = (2.6 - k * 0.2) * Z;
+          ctx.fillRect(x - s / 2, y - s / 2, s, s);
+        }
+        if (Math.random() < 0.004) pulses.push({ x: Math.round(pk.x / GAP) * GAP, y, r: 2 * Z, a: 0.8 });
+        if ((pk.dir === 1 && pk.x > w + 200) || (pk.dir === -1 && pk.x < -200)) Object.assign(pk, newPacket());
+      }
+
+      // pulsos de "evento"
+      for (let k = pulses.length - 1; k >= 0; k--) {
+        const pu = pulses[k];
+        pu.r += 40 * Z * dt; pu.a -= 0.6 * dt;
+        if (pu.a <= 0) { pulses.splice(k, 1); continue; }
+        ctx.strokeStyle = hexA(accent, pu.a * (1 - p));
+        ctx.lineWidth = Math.max(1, Z * 0.7);
+        ctx.strokeRect(pu.x - pu.r, pu.y - pu.r, pu.r * 2, pu.r * 2);
+      }
+
+      if (running && !reduce) raf = requestAnimationFrame(frame);
+    };
+
+    const start = () => { if (!running && !reduce) { running = true; parked = false; last = performance.now(); raf = requestAnimationFrame(frame); } };
+    const stop = () => { running = false; cancelAnimationFrame(raf); };
+
+    readColors();
+    resize();
+    raf = requestAnimationFrame(frame);
+    window.addEventListener('resize', () => { resize(); if (reduce) frame(performance.now()); });
+    window.addEventListener('themechange', () => { readColors(); if (reduce) frame(performance.now()); });
+    canvas.parentElement!.addEventListener('pointermove', (e) => {
+      const r = canvas.getBoundingClientRect();
+      mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top;
+    });
+    canvas.parentElement!.addEventListener('pointerleave', () => { mouse.x = mouse.y = -9999; });
+    new IntersectionObserver(([e]) => (e.isIntersecting && !document.hidden ? start() : stop())).observe(canvas);
+    document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
+    window.addEventListener('scroll', () => { if (parked && scrollP() < 0.999) start(); else if (reduce) frame(performance.now()); }, { passive: true });
+  }
+</script>

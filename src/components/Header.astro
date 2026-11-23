@@ -1,0 +1,185 @@
+---
+/**
+ * Menú: 3 apartados a la izquierda · logo centrado · 3 a la derecha (Propuesta §2).
+ * Sticky con fondo negro. En la Home (overlay) es transparente sobre el hero
+ * y se vuelve negro al hacer scroll.
+ */
+import { l, languages, langs, switchLang, useTranslations } from '@/i18n/utils';
+import type { Lang } from '@/i18n/ui';
+
+interface Props { lang: Lang; overlay?: boolean }
+const { lang, overlay = false } = Astro.props;
+const t = useTranslations(lang);
+const path = Astro.url.pathname;
+
+type Item = { label: string; href: string; children?: { label: string; href: string }[] };
+const left: Item[] = [
+  { label: t('nav.about'), href: l(lang, '/about/') },
+  { label: t('nav.lines'), href: l(lang, '/research-lines/') },
+  {
+    label: t('nav.projects'),
+    href: l(lang, '/projects/'),
+    children: [
+      { label: t('projects.all'), href: l(lang, '/projects/') },
+      { label: t('nav.projects.research'), href: l(lang, '/projects/research/') },
+      { label: t('nav.projects.transfer'), href: l(lang, '/projects/transfer/') },
+    ],
+  },
+];
+const right: Item[] = [
+  {
+    label: t('nav.publications'),
+    href: l(lang, '/publications/'),
+    children: [
+      { label: t('nav.publications'), href: l(lang, '/publications/') },
+      { label: t('nav.resources'), href: l(lang, '/publications/resources/') },
+    ],
+  },
+  { label: t('nav.team'), href: l(lang, '/team/') },
+  {
+    label: t('nav.newsContact'),
+    href: l(lang, '/news/'),
+    children: [
+      { label: t('nav.news'), href: l(lang, '/news/') },
+      { label: t('nav.contact'), href: l(lang, '/contact/') },
+    ],
+  },
+];
+const isCurrent = (href: string) => path.startsWith(href);
+const other = langs.find((x) => x !== lang)!;
+---
+
+<header class:list={['hdr', overlay && 'hdr--overlay']} data-header>
+  <div class="hdr__inner">
+    <nav class="hdr__nav hdr__nav--left" aria-label="Main (1/2)">
+      <ul>
+        {left.map((item) => (
+          <li class:list={[item.children && 'has-sub']}>
+            <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>{item.label}</a>
+            {item.children && (
+              <ul class="sub">{item.children.map((c) => <li><a href={c.href}>{c.label}</a></li>)}</ul>
+            )}
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <a href={l(lang)} class="hdr__logo" aria-label={`${t('site.name')} – ${t('site.fullName')}`}>
+      <!-- TODO: logo SVG oficial del NESG -->
+      <svg viewBox="0 0 28 28" width="28" height="28" aria-hidden="true">
+        <rect x="1" y="1" width="26" height="26" rx="7" fill="none" stroke="currentColor" stroke-width="1.5" />
+        <path d="M8 19V9l12 10V9" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <span>NESG</span>
+    </a>
+
+    <div class="hdr__right">
+      <nav class="hdr__nav hdr__nav--right" aria-label="Main (2/2)">
+        <ul>
+          {right.map((item) => (
+            <li class:list={[item.children && 'has-sub']}>
+              <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>{item.label}</a>
+              {item.children && (
+                <ul class="sub">{item.children.map((c) => <li><a href={c.href}>{c.label}</a></li>)}</ul>
+              )}
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <div class="hdr__tools">
+      <a href={l(lang, '/search/')} aria-label={t('nav.search')} title={t('nav.search')}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+      </a>
+      <a href={switchLang(path, other)} hreflang={other} lang={other} title={languages[other]} class="hdr__lang">{other.toUpperCase()}</a>
+      <button class="hdr__burger" aria-expanded="false" aria-controls="mobile-menu" aria-label="Menu" data-burger>
+        <span></span><span></span>
+      </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mnav" id="mobile-menu" hidden data-mnav>
+    <ul>
+      {[...left, ...right].map((item) => (
+        <li>
+          <a href={item.href}>{item.label}</a>
+          {item.children && <ul>{item.children.map((c) => <li><a href={c.href}>{c.label}</a></li>)}</ul>}
+        </li>
+      ))}
+    </ul>
+  </div>
+</header>
+{overlay && <div class="hdr-sentinel" data-header-sentinel aria-hidden="true"></div>}
+
+<style>
+  .hdr {
+    --hdr-fg: #e6ecea;
+    position: sticky; top: 0; z-index: 50;
+    height: var(--header-h);
+    background: #050708;
+    color: var(--hdr-fg);
+    border-bottom: 1px solid #1c2427;
+    transition: background .35s, border-color .35s, backdrop-filter .35s;
+  }
+  /* Home: flota sobre el hero y se oscurece al bajar */
+  .hdr--overlay { position: fixed; left: 0; right: 0; background: transparent; border-color: transparent; }
+  .hdr--overlay.is-scrolled { background: rgba(5, 7, 8, .92); backdrop-filter: blur(10px); border-color: #1c2427; }
+  :global(:root[data-theme='light']) .hdr--overlay:not(.is-scrolled) { --hdr-fg: #111816; }
+  .hdr-sentinel { position: absolute; top: 0; height: 40vh; width: 1px; pointer-events: none; }
+
+  .hdr__inner { height: 100%; max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; }
+  .hdr__logo { display: inline-flex; align-items: center; gap: .6rem; color: var(--hdr-fg); text-decoration: none; font: 700 1.15rem/1 var(--font-display); letter-spacing: .14em; }
+  .hdr__nav ul { list-style: none; margin: 0; padding: 0; display: flex; gap: .25rem; }
+  .hdr__nav a { display: block; padding: .55rem .75rem; color: var(--hdr-fg); text-decoration: none; font: 500 .74rem/1 var(--font-mono); text-transform: uppercase; letter-spacing: .1em; opacity: .82; border-radius: 6px; white-space: nowrap; }
+  .hdr__nav a:hover, .hdr__nav a[aria-current='page'] { opacity: 1; color: #3cc4b4; }
+  .hdr__nav--left { justify-self: start; }
+  .hdr__right { justify-self: end; display: flex; align-items: center; gap: 1.25rem; }
+  .has-sub { position: relative; }
+  .sub { display: none !important; position: absolute; top: 100%; left: 0; min-width: 240px; flex-direction: column; background: #0b0f11; border: 1px solid #253034; border-radius: 10px; padding: .4rem !important; box-shadow: 0 12px 32px rgba(0,0,0,.4); }
+  .sub a { color: #e6ecea; padding: .7rem .8rem; }
+  .has-sub:hover .sub, .has-sub:focus-within .sub { display: flex !important; }
+
+  .hdr__tools { display: flex; align-items: center; gap: .9rem; }
+  .hdr__tools a { color: var(--hdr-fg); text-decoration: none; display: inline-flex; opacity: .82; }
+  .hdr__tools a:hover { opacity: 1; color: #3cc4b4; }
+  .hdr__lang { font: 600 .72rem/1 var(--font-mono); letter-spacing: .1em; border: 1px solid currentColor; border-radius: 6px; padding: .35rem .45rem; }
+
+  .hdr__burger { display: none; background: none; border: 0; padding: .5rem; cursor: pointer; flex-direction: column; gap: 6px; }
+  .hdr__burger span { display: block; width: 22px; height: 1.5px; background: var(--hdr-fg); transition: transform .25s; }
+  .hdr__burger[aria-expanded='true'] span:first-child { transform: translateY(3.75px) rotate(45deg); }
+  .hdr__burger[aria-expanded='true'] span:last-child { transform: translateY(-3.75px) rotate(-45deg); }
+
+  .mnav { position: fixed; inset: var(--header-h) 0 0 0; background: #050708; overflow: auto; padding: 1.5rem var(--gutter) 3rem; }
+  .mnav ul { list-style: none; margin: 0; padding: 0; }
+  .mnav > ul > li { border-bottom: 1px solid #1c2427; padding: .9rem 0; }
+  .mnav > ul > li > a { font: 600 1.5rem/1.2 var(--font-display); color: #fff; text-decoration: none; }
+  .mnav ul ul { margin-top: .4rem; }
+  .mnav ul ul a { display: block; padding: .35rem 0; color: #8d9a97; text-decoration: none; font: .8rem var(--font-mono); text-transform: uppercase; letter-spacing: .08em; }
+
+  @media (max-width: 1180px) {
+    .hdr__nav { display: none; }
+    .hdr__inner { grid-template-columns: auto 1fr auto; }
+    .hdr__logo { grid-column: 1; grid-row: 1; }
+    .hdr__right { grid-column: 3; grid-row: 1; }
+    .hdr__burger { display: inline-flex; }
+  }
+</style>
+
+<script>
+  const header = document.querySelector<HTMLElement>('[data-header]')!;
+  const burger = header.querySelector<HTMLButtonElement>('[data-burger]')!;
+  const mnav = header.querySelector<HTMLElement>('[data-mnav]')!;
+  burger.addEventListener('click', () => {
+    const open = burger.getAttribute('aria-expanded') !== 'true';
+    burger.setAttribute('aria-expanded', String(open));
+    mnav.hidden = !open;
+    document.body.style.overflow = open ? 'hidden' : '';
+    header.classList.toggle('is-scrolled', open || window.scrollY > 10);
+  });
+
+  // Home: negro al salir de la parte alta del hero
+  const sentinel = document.querySelector('[data-header-sentinel]');
+  if (sentinel) {
+    new IntersectionObserver(([e]) => header.classList.toggle('is-scrolled', !e.isIntersecting)).observe(sentinel);
+  }
+</script>

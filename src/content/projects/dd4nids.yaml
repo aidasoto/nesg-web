@@ -1,0 +1,24 @@
+# Fuente: https://produccioncientifica.ugr.es/proyectos/340907/detalle
+# Título oficial en español; el inglés es traducción → revisar.
+# TODO: summary / description (el portal no trae resumen). Líneas asignadas por el título → confirmar.
+title:
+  en: Data-driven methods for robust and generalizable network intrusion detection systems
+  es: Nuevos métodos basados en datos para la mejora de la robustez y generalización de sistemas de detección de intrusiones en red
+acronym: DD4NIDS
+type: research
+code: PPJIA2022-52
+funder: Universidad de Granada (Plan Propio)
+start: '2023-01-01'
+end: '2023-12-31'
+lines:
+- intrusion-detection
+pi:
+- roberto-magan-carrion
+members:
+- pedro-garcia-teodoro
+- gabriel-macia-fernandez
+- jose-antonio-gomez-hernandez
+- margarita-robles-carrillo
+grantIds:
+- PPJIA2022-52
+source: https://produccioncientifica.ugr.es/proyectos/340907/detalle

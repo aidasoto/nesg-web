@@ -1,0 +1,24 @@
+# Fuente: https://produccioncientifica.ugr.es/proyectos/1383301/detalle
+# Título oficial en español; el inglés es traducción → revisar.
+# TODO: summary / description (el portal no trae resumen). Líneas asignadas por el título → confirmar.
+title:
+  en: Intent verification and intelligent logic generation for automated actions against network and system security threats
+  es: Verificación de intenciones y generación de lógica inteligente para acciones automatizadas contra amenazas a la seguridad de redes y sistemas
+type: research
+code: PID2024-161902OB-I00
+funder: Agencia Estatal de Investigación (MICIU/AEI)
+start: '2025-09-01'
+end: '2028-08-31'
+lines:
+- intrusion-detection
+pi:
+- pedro-garcia-teodoro
+- roberto-magan-carrion
+members:
+- gabriel-macia-fernandez
+- jose-antonio-gomez-hernandez
+- irene-gosalvez-white
+featured: true
+grantIds:
+- PID2024-161902OB-I00
+source: https://produccioncientifica.ugr.es/proyectos/1383301/detalle

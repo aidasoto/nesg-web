@@ -1,0 +1,21 @@
+# Fuente: https://produccioncientifica.ugr.es/proyectos/260247/detalle
+# Título oficial en español; el inglés es traducción → revisar.
+# TODO: summary / description (el portal no trae resumen). Líneas asignadas por el título → confirmar.
+title:
+  en: Survivability of MANETs against security incidents
+  es: Supervivencia de redes MANET ante incidentes de seguridad
+type: research
+code: TEC2011-22579
+funder: Ministerio de Ciencia e Innovación (Plan Nacional I+D+i)
+start: '2012-01-01'
+end: '2015-06-30'
+lines:
+- intrusion-detection
+pi:
+- pedro-garcia-teodoro
+members:
+- gabriel-macia-fernandez
+- roberto-magan-carrion
+grantIds:
+- TEC2011-22579
+source: https://produccioncientifica.ugr.es/proyectos/260247/detalle

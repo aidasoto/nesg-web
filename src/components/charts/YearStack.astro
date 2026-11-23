@@ -1,0 +1,139 @@
+---
+/**
+ * Publicaciones por año, apiladas por tipo (4 series).
+ * - Tooltip por columna con el desglose.
+ * - `filterTarget`: si se da, al pulsar un año se filtra el listado (select[name=year]).
+ * - `link`: id de un <Composition id=…>; al pulsar un año muestra allí su desglose,
+ *   y al pulsar fuera vuelve al global.
+ * - Sin ninguno de los dos, la gráfica no reacciona al clic (solo tooltip), para no
+ *   sugerir una acción que no existe.
+ * - Tabla accesible en <details>.
+ */
+import type { Lang } from '@/i18n/ui';
+import type { Publication } from '@/lib/data';
+import { TYPE_GROUPS, niceTicks, pubsByYear, roundedTop, tipRow } from '@/lib/charts';
+
+interface Props { pubs: Publication[]; lang: Lang; title: string; filterTarget?: string; link?: string; height?: number }
+const { pubs, lang, title, filterTarget, link, height = 220 } = Astro.props;
+const interactive = !!(filterTarget || link);
+
+const rows = pubsByYear(pubs);
+const max = Math.max(1, ...rows.map((r) => r.total));
+const ticks = niceTicks(max, 3);
+const top = ticks[ticks.length - 1];
+const W = 720, H = height, padL = 28, padB = 26, padT = 10;
+const plotH = H - padB - padT;
+const step = (W - padL) / Math.max(rows.length, 1);
+const bw = Math.min(28, step * 0.62);
+const y = (v: number) => padT + plotH - (v / top) * plotH;
+const GAP = 2; // separación de superficie entre segmentos
+const labelEvery = rows.length > 16 ? 2 : 1;
+const legendTotals = TYPE_GROUPS.map((g) => ({ ...g, n: rows.reduce((s, r) => s + r[g.id], 0) })).filter((g) => g.n > 0);
+const t = (en: string, es: string) => (lang === 'es' ? es : en);
+---
+
+{rows.length > 0 && (
+<figure class:list={['viz', 'yst', interactive && 'yst--interactive']} data-year-chart={filterTarget} data-year-link={link}>
+  <figcaption class="viz__head">
+    <span class="kicker">{title}</span>
+    <ul class="viz__legend">
+      {legendTotals.map((g) => <li><i style={`background:${g.color}`}></i>{g.label[lang]} <b>{g.n}</b></li>)}
+    </ul>
+  </figcaption>
+  <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={title}>
+    {ticks.map((v) => (
+      <g class="viz__grid">
+        <line x1={padL} x2={W} y1={y(v)} y2={y(v)} />
+        <text x={padL - 8} y={y(v) + 3} text-anchor="end">{v}</text>
+      </g>
+    ))}
+    {rows.map((r, i) => {
+      const x = padL + i * step + (step - bw) / 2;
+      let acc = 0;
+      const segs = TYPE_GROUPS.filter((g) => r[g.id] > 0);
+      const tip = `<b>${r.year}</b> · ${r.total} ${t('publications', 'publicaciones')}<br>` +
+        TYPE_GROUPS.filter((g) => r[g.id] > 0).map((g) => tipRow(g.color, g.label[lang], r[g.id])).join('<br>');
+      return (
+        <g class="yst__col" style={`--i:${i}`} data-col-year={r.year}>
+          {segs.map((g, si) => {
+            const y0 = y(acc), y1 = y(acc + r[g.id]);
+            acc += r[g.id];
+            const h = Math.max(0, y0 - y1 - (si < segs.length - 1 ? GAP : 0));
+            const yTop = si < segs.length - 1 ? y1 + GAP : y1;
+            return si === segs.length - 1
+              ? <path d={roundedTop(x, yTop, bw, Math.max(0, y0 - yTop))} fill={g.color} />
+              : <rect x={x} y={yTop} width={bw} height={h} fill={g.color} />;
+          })}
+          {i % labelEvery === 0 && <text class="viz__xlabel" x={x + bw / 2} y={H - 8} text-anchor="middle">{`'${String(r.year).slice(2)}`}</text>}
+          <rect class="yst__hit" x={padL + i * step} y={padT} width={step} height={plotH}
+            data-tip={tip} data-year={r.total ? r.year : undefined} tabindex={interactive && r.total ? 0 : undefined} role={interactive && r.total ? 'button' : undefined} />
+        </g>
+      );
+    })}
+    <line class="viz__base" x1={padL} x2={W} y1={y(0)} y2={y(0)} />
+  </svg>
+  <details class="viz__table">
+    <summary>{t('View as table', 'Ver como tabla')}</summary>
+    <table>
+      <thead><tr><th>{t('Year', 'Año')}</th>{TYPE_GROUPS.map((g) => <th>{g.label[lang]}</th>)}<th>Total</th></tr></thead>
+      <tbody>{rows.filter((r) => r.total).map((r) => <tr><td>{r.year}</td>{TYPE_GROUPS.map((g) => <td>{r[g.id]}</td>)}<td>{r.total}</td></tr>)}</tbody>
+    </table>
+  </details>
+</figure>
+)}
+
+<style>
+  .yst svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .yst__col { transform-box: fill-box; transform-origin: bottom; transform: scaleY(0); }
+  :global(.viz.is-in) .yst__col { transform: none; }
+  .yst__col { transition: transform .8s var(--ease) calc(var(--i) * 25ms), opacity .3s; }
+  .yst__hit { fill: transparent; }
+  /* Solo las gráficas con acción muestran resaltado y cursor de clic */
+  .yst--interactive .yst__hit[data-year] { cursor: pointer; }
+  .yst--interactive .yst__hit[data-year]:hover, .yst--interactive .yst__hit[data-year]:focus-visible { fill: var(--accent-soft); outline: none; }
+  .yst.has-selection .yst__col:not(.is-selected) { opacity: .25; }
+</style>
+
+<script>
+  // Clic en un año → filtra el listado de publicaciones
+  document.querySelectorAll<HTMLElement>('[data-year-chart]').forEach((fig) => {
+    const sel = fig.dataset.yearChart;
+    if (!sel) return;
+    const pick = (el: HTMLElement | null) => {
+      const year = el?.dataset.year;
+      const select = document.querySelector<HTMLSelectElement>(sel);
+      if (!year || !select) return;
+      select.value = select.value === year ? '' : year;
+      select.dispatchEvent(new Event('input', { bubbles: true }));
+      select.closest('form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    fig.addEventListener('click', (e) => pick((e.target as HTMLElement).closest('[data-year]')));
+    fig.addEventListener('keydown', (e) => { if (e.key === 'Enter') pick((e.target as HTMLElement).closest('[data-year]')); });
+  });
+
+  // Clic en un año → desglose en la Composition enlazada; clic fuera → global
+  document.querySelectorAll<HTMLElement>('[data-year-link]').forEach((fig) => {
+    const target = document.getElementById(fig.dataset.yearLink!);
+    let current: string | null = null;
+    const select = (year: string | null) => {
+      current = year;
+      fig.classList.toggle('has-selection', !!year);
+      fig.querySelectorAll<SVGGElement>('.yst__col').forEach((c) => c.classList.toggle('is-selected', !!year && c.dataset.colYear === year));
+      fig.querySelectorAll<SVGRectElement>('.yst__hit[data-year]').forEach((h) => h.setAttribute('aria-pressed', String(h.dataset.year === year)));
+      target?.dispatchEvent(new CustomEvent('comp:year', { detail: year }));
+    };
+    const pick = (el: HTMLElement | null) => {
+      const year = el?.closest<HTMLElement>('[data-year]')?.dataset.year ?? null;
+      select(year && year !== current ? year : null);
+    };
+    fig.addEventListener('click', (e) => pick(e.target as HTMLElement));
+    fig.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(e.target as HTMLElement); }
+      if (e.key === 'Escape') select(null);
+    });
+    document.addEventListener('click', (e) => {
+      const el = e.target as Node;
+      if (current && !fig.contains(el) && !target?.contains(el)) select(null);
+    });
+  });
+</script>

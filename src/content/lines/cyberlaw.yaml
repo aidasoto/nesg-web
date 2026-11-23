@@ -1,0 +1,14 @@
+order: 4
+icon: scale
+title:
+  en: Cyberlaw
+  es: Ciberderecho
+short:
+  en: "Legal, regulatory and governance aspects of cybersecurity and cyberspace."
+  es: "Aspectos jurídicos, regulatorios y de gobernanza de la ciberseguridad y el ciberespacio."
+description:
+  en: |
+    TODO: long description (to be written by the group).
+  es: |
+    TODO: descripción larga (a redactar por el grupo).
+keywords: [cyberlaw, cyberspace, international law, data protection, gdpr, regulation, governance, cyber defence, cybersecurity law, sovereignty]

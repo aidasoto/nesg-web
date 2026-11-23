@@ -1,0 +1,138 @@
+---
+/** Perfil = "CV vivo": proyectos, publicaciones y gráficas se calculan solos. */
+import { Image } from 'astro:assets';
+import { getEntries } from 'astro:content';
+import Base from '@/layouts/Base.astro';
+import PageBar from '@/components/PageBar.astro';
+import ProjectCard from '@/components/ProjectCard.astro';
+import PubItem from '@/components/PubItem.astro';
+import YearStack from '@/components/charts/YearStack.astro';
+import Composition from '@/components/charts/Composition.astro';
+import BarList from '@/components/charts/BarList.astro';
+import Timeline from '@/components/charts/Timeline.astro';
+import { l, langs, localize, md, useTranslations } from '@/i18n/utils';
+import type { Lang } from '@/i18n/ui';
+import { getPeople, getProjects, getPublications, neighbours, projectStatus, projectsByPerson, pubsByPerson } from '@/lib/data';
+
+export async function getStaticPaths() {
+  const people = await getPeople();
+  return langs.flatMap((lang) => people.map((person) => ({ params: { lang, slug: person.id }, props: { person } })));
+}
+const { person } = Astro.props;
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const d = person.data;
+const [people, lines, projects, pubs] = await Promise.all([getPeople(), getEntries(d.lines), getProjects(), getPublications()]);
+const myProjects = projectsByPerson(projects, person.id);
+const myPubs = pubsByPerson(pubs, person.id);
+const nb = neighbours(people, person.id);
+
+// Cifras
+const citations = myPubs.reduce((s, p) => s + p.data.citations, 0);
+const active = myProjects.filter((p) => projectStatus(p) === 'active').length;
+const piOf = myProjects.filter((p) => p.data.pi.some((r) => r.id === person.id)).length;
+
+// Coautores del grupo
+const byId = new Map(people.map((p) => [p.id, p]));
+const co = new Map<string, number>();
+for (const p of myPubs) for (const a of p.data.authors) if (a.person && a.person.id !== person.id) co.set(a.person.id, (co.get(a.person.id) ?? 0) + 1);
+const coRows = [...co.entries()].filter(([id]) => byId.has(id)).sort((a, b) => b[1] - a[1]).slice(0, 6)
+  .map(([id, n]) => ({ label: byId.get(id)!.data.name, value: n, href: l(lang, `/team/${id}/`) }));
+
+const links = Object.entries({ ORCID: d.orcid && `https://orcid.org/${d.orcid}`, Web: d.links.web, 'Google Scholar': d.links.scholar, DBLP: d.links.dblp, GitHub: d.links.github, LinkedIn: d.links.linkedin }).filter(([, v]) => v) as [string, string][];
+const initials = d.name.split(' ').filter((w) => w.length > 2).map((w) => w[0]).slice(0, 2).join('');
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: d.name,
+  jobTitle: d.position ? localize(d.position, lang) : undefined,
+  affiliation: { '@type': 'Organization', name: 'NESG – Universidad de Granada' },
+  identifier: d.orcid ? `https://orcid.org/${d.orcid}` : undefined,
+  sameAs: links.map(([, v]) => v),
+};
+---
+
+<Base lang={lang} title={d.name} description={d.position ? `${d.name} – ${localize(d.position, lang)}` : d.name} jsonLd={jsonLd} surface="light">
+  <PageBar
+    lang={lang}
+    crumbs={[{ label: t('nav.team'), href: l(lang, '/team/') }, { label: t(`team.${d.role}`), href: l(lang, `/team/#${d.role}`) }, { label: d.name }]}
+    prev={{ label: nb.prev.data.name, href: l(lang, `/team/${nb.prev.id}/`) }}
+    next={{ label: nb.next.data.name, href: l(lang, `/team/${nb.next.id}/`) }}
+    index={[nb.index, nb.total]}
+  />
+
+  <article class="container profile-page">
+    <header class="ph">
+      <div class="ph__photo">
+        {d.photo ? <Image src={d.photo} alt={d.name} width={320} height={320} /> : <span aria-hidden="true">{initials}</span>}
+      </div>
+      <div class="ph__id">
+        <p class="kicker kicker--accent">{t(`team.${d.role}`)} · ID/{person.id}</p>
+        <h1>{d.name}</h1>
+        {d.position && <p class="ph__pos">{localize(d.position, lang)}</p>}
+        <dl class="spec">
+          {d.orcid && <div><dt>ORCID</dt><dd><a href={`https://orcid.org/${d.orcid}`} rel="noopener"><code>{d.orcid}</code></a></dd></div>}
+          {d.email && <div><dt>Email</dt><dd><a href={`mailto:${d.email}`}>{d.email}</a></dd></div>}
+          {lines.length > 0 && <div><dt>{t('team.lines')}</dt><dd>{lines.map((ln) => <a class="tag" href={l(lang, `/research-lines/${ln.id}/`)}>{localize(ln.data.title, lang)}</a>)}</dd></div>}
+          {links.length > 0 && <div><dt>Links</dt><dd>{links.map(([k, v]) => <a class="tag" href={v} rel="noopener">{k} ↗</a>)}</dd></div>}
+        </dl>
+      </div>
+    </header>
+
+    {d.bio && <div class="prose section--tight" set:html={md(localize(d.bio, lang))} />}
+
+    <div class="stats reveal">
+      <div class="stat"><span class="stat__value">{myPubs.length}</span><span class="stat__label">{t('team.publications')}</span></div>
+      <div class="stat"><span class="stat__value">{citations}</span><span class="stat__label">{t('home.stats.citations')}</span></div>
+      <div class="stat"><span class="stat__value">{myProjects.length}</span><span class="stat__label">{t('team.projects')}</span></div>
+      <div class="stat"><span class="stat__value">{piOf}</span><span class="stat__label">{lang === 'es' ? 'como IP' : 'as PI'}</span></div>
+      <div class="stat"><span class="stat__value">{active}</span><span class="stat__label">{t('home.stats.projects')}</span></div>
+    </div>
+
+    {myPubs.length >= 3 && (
+      <section class="block">
+        <div class="section-head"><div><span class="section-head__idx">01</span><h2>{lang === 'es' ? 'Producción' : 'Output'}</h2></div></div>
+        <YearStack pubs={myPubs} lang={lang} title={t('charts.perYearType')} height={200} />
+        <div class="viz-row block-gap">
+          <Composition pubs={myPubs} lang={lang} title={t('charts.composition')} />
+          {coRows.length > 0 && <BarList rows={coRows} title={t('charts.coauthors')} unit={lang === 'es' ? 'publicaciones' : 'publications'} />}
+        </div>
+      </section>
+    )}
+
+    {myProjects.length > 0 && (
+      <section class="block">
+        <div class="section-head"><div><span class="section-head__idx">02</span><h2>{t('team.projects')} <span class="muted">({myProjects.length})</span></h2></div></div>
+        {myProjects.length > 1 && <Timeline projects={myProjects} lang={lang} title={t('charts.timeline')} />}
+        <div class="grid block-gap">{myProjects.map((p) => <ProjectCard project={p} lang={lang} />)}</div>
+      </section>
+    )}
+
+    {myPubs.length > 0 && (
+      <section class="block">
+        <div class="section-head">
+          <div><span class="section-head__idx">03</span><h2>{t('team.publications')} <span class="muted">({myPubs.length})</span></h2></div>
+          {myPubs.length > 15 && <a href={l(lang, `/publications/?author=${person.id}`)}>{t('common.seeAll')} →</a>}
+        </div>
+        <ul class="list-plain">{myPubs.slice(0, 15).map((pub) => <PubItem pub={pub} lang={lang} />)}</ul>
+      </section>
+    )}
+
+    <a class="back" href={l(lang, '/team/')}>← {t('team.back')}</a>
+  </article>
+</Base>
+
+<style>
+  .profile-page { padding-bottom: 5rem; }
+  .ph { display: grid; gap: 2rem; grid-template-columns: minmax(0, 260px) 1fr; align-items: start; padding: 2.5rem 0 3rem; }
+  @media (max-width: 760px) { .ph { grid-template-columns: 1fr; } .ph__photo { max-width: 200px; } }
+  .ph__photo { aspect-ratio: 1; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); background: var(--card); display: grid; place-items: center; position: relative; }
+  .ph__photo::after { content: ''; position: absolute; inset: 0; background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 16px 16px; pointer-events: none; }
+  .ph__photo :global(img) { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1); }
+  .ph__photo span { font: 600 3.5rem var(--font-mono); color: var(--accent); }
+  .ph h1 { margin: .5rem 0 .25rem; }
+  .ph__pos { font: 500 .95rem var(--font-mono); color: var(--muted); margin: 0 0 1.5rem; }
+  .block { margin-top: 4rem; }
+  .block-gap { margin-top: 1rem; }
+</style>

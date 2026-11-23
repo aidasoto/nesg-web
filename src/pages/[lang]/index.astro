@@ -1,0 +1,277 @@
+---
+/**
+ * Home (Propuesta §3): hero 100vh con malla de datos → (fusión al hacer scroll) →
+ * presentación y cifras · líneas · producción científica · proyectos destacados ·
+ * actualidad · logos de confianza.
+ */
+import { getCollection } from 'astro:content';
+import Base from '@/layouts/Base.astro';
+import DataField from '@/components/DataField.astro';
+import ThemeToggle from '@/components/ThemeToggle.astro';
+import LineCard from '@/components/LineCard.astro';
+import PubItem from '@/components/PubItem.astro';
+import ProjectCard from '@/components/ProjectCard.astro';
+import NewsCard from '@/components/NewsCard.astro';
+import YearStack from '@/components/charts/YearStack.astro';
+import Composition from '@/components/charts/Composition.astro';
+import { formatDate, l, langPaths, useTranslations } from '@/i18n/utils';
+import type { Lang } from '@/i18n/ui';
+import { getImpactFigures, getLines, getNews, getPeople, getProjects, getPublications, lineCounts, projectStatus, stats } from '@/lib/data';
+import { site } from '@/config/site';
+
+export const getStaticPaths = langPaths;
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+
+const [figures, lines, pubs, projects, people, news, partners] = await Promise.all([
+  getImpactFigures(), getLines(), getPublications(), getProjects(), getPeople(), getNews(lang),
+  getCollection('partners', (p) => p.data.trust),
+]);
+const featured = projects.filter((p) => p.data.featured);
+const shown = featured.length ? featured : projects.filter((p) => projectStatus(p) === 'active');
+partners.sort((a, b) => a.data.order - b.data.order);
+const ugr = partners.find((p) => p.id === 'ugr');
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ResearchOrganization',
+  name: `NESG – ${t('site.fullName')}`,
+  url: new URL(l(lang), Astro.site).href,
+  sameAs: [site.github],
+  foundingDate: '2012-06-25',
+  parentOrganization: { '@type': 'CollegeOrUniversity', name: 'Universidad de Granada', url: 'https://www.ugr.es' },
+  address: { '@type': 'PostalAddress', streetAddress: site.address.street, postalCode: site.address.postalCode, addressLocality: site.address.city, addressCountry: site.address.country },
+};
+---
+
+<Base lang={lang} jsonLd={jsonLd} home>
+  <!-- ============ HERO (100vh, fijo detrás del contenido) ============ -->
+  <section class="hero" data-hero aria-labelledby="hero-title">
+    <DataField />
+    <div class="hero__veil" aria-hidden="true"></div>
+    <div class="container hero__content">
+      <p class="kicker kicker--accent">// NESG · {t('site.fullName')}</p>
+      <h1 id="hero-title">{t('home.h1')}</h1>
+      <p class="hero__lead">{t('home.lead')}</p>
+      <div class="hero__cta">
+        <a class="btn btn--primary" href={l(lang, '/projects/')}>{t('home.cta.projects')} →</a>
+        <a class="btn" href={l(lang, '/publications/')}>{t('home.cta.publications')}</a>
+      </div>
+    </div>
+
+    <div class="hero__bar">
+      <div class="hero__bar-left"><ThemeToggle lang={lang} /></div>
+      <a class="hero__ugr" href="https://www.ugr.es" rel="noopener" aria-label="Universidad de Granada">
+        {ugr?.data.logo
+          ? <img src={ugr.data.logo} alt="Universidad de Granada" class="hero__ugr-img" width="818" height="237" />
+          : <span class="hero__ugr-text">Universidad<br />de Granada</span>}
+      </a>
+      <dl class="hero__feed">
+        <div><dt>{t('home.feed')}</dt><dd><span class="status status--active">OpenAlex</span></dd></div>
+        <div><dt>{t('home.stats.publications')}</dt><dd>{figures.publications}</dd></div>
+        <div><dt>{t('home.stats.projects')}</dt><dd>{figures.activeProjects}</dd></div>
+        <div><dt>{t('home.sync')}</dt><dd>{formatDate(stats.generatedAt, lang, { dateStyle: 'short' })}</dd></div>
+        <div class="hero__geo"><dt>ETSIIT</dt><dd>{site.geo.lat.toFixed(4)}°N {Math.abs(site.geo.lon).toFixed(4)}°W</dd></div>
+      </dl>
+    </div>
+    <span class="hero__scroll kicker" aria-hidden="true">{t('home.scroll')} ↓</span>
+  </section>
+
+  <!-- ============ CONTENIDO (se funde sobre el hero) ============ -->
+  <div class="home-body">
+    <section class="section intro">
+      <div class="container intro__grid">
+        <div>
+          <p class="section-head__idx">01 — {t('nav.about')}</p>
+          <p class="intro__text">{t('home.intro')}</p>
+          <a class="btn" href={l(lang, '/about/')}>{t('common.readMore')} →</a>
+        </div>
+        <div class="stats reveal">
+          <div class="stat"><span class="stat__value" data-countup={figures.publications}>{figures.publications}</span><span class="stat__label">{t('home.stats.publications')}</span></div>
+          <div class="stat"><span class="stat__value" data-countup={stats.citations}>{stats.citations.toLocaleString(lang === 'es' ? 'es-ES' : 'en-GB')}</span><span class="stat__label">{t('home.stats.citations')}</span></div>
+          <div class="stat"><span class="stat__value" data-countup={figures.activeProjects}>{figures.activeProjects}</span><span class="stat__label">{t('home.stats.projects')}</span></div>
+          <div class="stat"><span class="stat__value" data-countup={figures.researchers}>{figures.researchers}</span><span class="stat__label">{t('home.stats.researchers')}</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section surface-light">
+      <div class="container">
+        <div class="section-head">
+          <div><span class="section-head__idx">02</span><h2>{t('nav.lines')}</h2><p class="muted">{t('home.lines.lead')}</p></div>
+          <a href={l(lang, '/research-lines/')}>{t('common.seeAll')} →</a>
+        </div>
+        <div class="grid lines-grid">{lines.map((line) => <LineCard line={line} lang={lang} counts={lineCounts(line.id, pubs, projects, people)} />)}</div>
+      </div>
+    </section>
+
+    <section class="section surface-dark bg-grid">
+      <div class="container">
+        <div class="section-head">
+          <div><span class="section-head__idx">03</span><h2>{t('home.data')}</h2></div>
+          <a href={l(lang, '/publications/')}>{t('common.seeAll')} →</a>
+        </div>
+        <div class="data-grid">
+          <YearStack pubs={pubs} lang={lang} title={t('charts.perYearType')} link="home-composition" />
+          <Composition pubs={pubs} lang={lang} title={t('charts.composition')} id="home-composition" />
+        </div>
+        <h3 class="kicker latest-title">{t('home.latestPubs')}</h3>
+        <ul class="list-plain">{pubs.slice(0, 4).map((pub) => <PubItem pub={pub} lang={lang} />)}</ul>
+      </div>
+    </section>
+
+    {shown.length > 0 && (
+      <section class="section surface-light">
+        <div class="container">
+          <div class="section-head">
+            <div><span class="section-head__idx">04</span><h2>{t('home.featured')}</h2></div>
+            <div class="carousel-ctrl">
+              <button class="pbtn" data-carousel-prev aria-label="←">←</button>
+              <button class="pbtn" data-carousel-next aria-label="→">→</button>
+              <a href={l(lang, '/projects/')}>{t('common.seeAll')} →</a>
+            </div>
+          </div>
+          <div class="carousel" data-carousel>{shown.map((p) => <ProjectCard project={p} lang={lang} />)}</div>
+        </div>
+      </section>
+    )}
+
+    {news.length > 0 && (
+      <section class="section surface-dark">
+        <div class="container">
+          <div class="section-head">
+            <div><span class="section-head__idx">05</span><h2>{t('home.news')}</h2></div>
+            <a href={l(lang, '/news/')}>{t('common.seeAll')} →</a>
+          </div>
+          <div class="grid">{news.slice(0, 3).map((n) => <NewsCard item={n} lang={lang} />)}</div>
+        </div>
+      </section>
+    )}
+
+    <section class="section--tight surface-light trust" aria-label={t('home.trust')}>
+      <div class="container">
+        <p class="kicker trust__title">{t('home.trust')}</p>
+      </div>
+      <!-- Cinta continua: la lista va duplicada para que el bucle no tenga salto -->
+      <div class="marquee" style={`--n:${partners.length}`}>
+        <div class="marquee__track">
+          {[0, 1].map((copy) => (
+            <ul class="list-plain marquee__list" aria-hidden={copy === 1 ? 'true' : undefined}>
+              {partners.map((p) => (
+                <li>
+                  <a href={p.data.url} title={p.data.name} tabindex={copy === 1 ? -1 : undefined} rel="noopener">
+                    {p.data.logo ? <img src={p.data.logo} alt={p.data.name} class="trust__img" loading="lazy" /> : <span class="trust__name">{p.data.name}</span>}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ))}
+        </div>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<style>
+  /* ---------- Hero ---------- */
+  .hero { --p: 0; position: sticky; top: 0; height: 100vh; height: 100svh; min-height: 560px; overflow: hidden; background: var(--bg); z-index: 0; }
+  .hero__veil { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 30% 50%, transparent 0%, transparent 40%, var(--bg) 100%); opacity: .75; }
+  /* En modo claro el velo se come los puntos: más suave */
+  :global(:root[data-theme='light']) .hero__veil { opacity: .3; }
+  .hero__content {
+    position: relative; height: 100%; display: flex; flex-direction: column; justify-content: center;
+    padding-top: var(--header-h); padding-bottom: 7rem; pointer-events: none;
+    opacity: calc(1 - var(--p) * 1.6);
+    transform: translateY(calc(var(--p) * -80px)) scale(calc(1 - var(--p) * .06));
+    filter: blur(calc(var(--p) * 10px));
+  }
+  .hero__content > * { pointer-events: auto; }
+  .hero h1 { font-size: clamp(1.9rem, 8.4vw, 6.2rem); max-width: 18ch; line-height: .98; margin: .5rem 0 1.25rem; }
+  .hero__lead { font-size: clamp(1rem, 1.6vw, 1.25rem); color: var(--muted); max-width: 52ch; margin: 0; }
+  .hero__cta { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 2.25rem; }
+
+  .hero__bar {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 1rem;
+    padding: 1.25rem var(--gutter) 1.5rem; max-width: var(--max); margin: 0 auto;
+    border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+    opacity: calc(1 - var(--p) * 2);
+  }
+  .hero__bar-left { justify-self: start; color: var(--fg); }
+  .hero__ugr { justify-self: center; color: var(--fg); text-decoration: none; opacity: .85; }
+  .hero__ugr:hover { opacity: 1; }
+  /* Marca UGR: en negativo (blanco) sobre el hero oscuro; a color en modo claro */
+  .hero__ugr-img { display: block; height: 46px; width: auto; filter: brightness(0) invert(1); opacity: .9; }
+  :global(:root[data-theme='light']) .hero__ugr-img { filter: none; opacity: 1; }
+  .trust__img { display: block; height: 52px; width: auto; max-width: 220px; object-fit: contain; }
+  .hero__ugr-text { display: block; text-align: center; font: 600 .78rem/1.15 var(--font-display); text-transform: uppercase; letter-spacing: .18em; padding: .4rem .9rem; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+  .hero__feed { justify-self: end; margin: 0; display: grid; grid-template-columns: repeat(2, auto); gap: .3rem 1.5rem; font: .68rem/1.3 var(--font-mono); text-transform: uppercase; letter-spacing: .08em; }
+  .hero__feed div { display: flex; gap: .6rem; justify-content: space-between; }
+  .hero__feed dt { color: var(--muted); }
+  .hero__feed dd { margin: 0; color: var(--fg-strong); font-variant-numeric: tabular-nums; }
+  .hero__geo { grid-column: 1 / -1; border-top: 1px dashed var(--border); padding-top: .3rem; }
+  .hero__scroll { position: absolute; left: 50%; bottom: 6.5rem; transform: translateX(-50%); opacity: calc(.7 - var(--p) * 3); animation: bob 2.4s infinite; }
+  @keyframes bob { 50% { transform: translate(-50%, 6px); } }
+  @media (max-width: 760px) {
+    .hero__bar { grid-template-columns: 1fr auto; }
+    .hero__feed { display: none; }
+    .hero__ugr { justify-self: end; }
+    .hero__scroll { display: none; }
+  }
+
+  /* ---------- Fusión: el contenido emerge sobre la malla ---------- */
+  .home-body { position: relative; z-index: 1; }
+  .intro { padding-top: calc(24vh + 3rem); background: linear-gradient(to bottom, transparent 0, color-mix(in srgb, var(--bg) 70%, transparent) 12vh, var(--bg) 24vh); }
+  .intro__grid { display: grid; gap: 3rem; align-items: center; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); }
+  .intro__text { font: 400 clamp(1.25rem, 2.2vw, 1.75rem)/1.4 var(--font-display); color: var(--fg-strong); letter-spacing: -.01em; margin: 1rem 0 2rem; }
+  .intro .stats { grid-template-columns: repeat(2, 1fr); }
+  .stats .stat:first-child { background: linear-gradient(135deg, var(--accent-soft), var(--card)); }
+
+  .lines-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
+  .data-grid { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); }
+  @media (max-width: 900px) { .data-grid { grid-template-columns: 1fr; } }
+  .latest-title { margin: 3rem 0 .5rem; }
+
+  .carousel { display: grid; grid-auto-flow: column; grid-auto-columns: min(85%, 360px); gap: 1rem; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 1rem; scrollbar-width: thin; }
+  .carousel > :global(*) { scroll-snap-align: start; }
+  .carousel-ctrl { display: flex; align-items: center; gap: .5rem; }
+  .pbtn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; font: 1rem var(--font-mono); }
+  .pbtn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .trust__title { text-align: center; margin: 0 0 1.5rem; }
+  .marquee { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+  .marquee__track { display: flex; width: max-content; animation: marquee calc(var(--n) * 6s) linear infinite; }
+  .marquee:hover .marquee__track, .marquee:focus-within .marquee__track { animation-play-state: paused; }
+  .marquee__list { display: flex; align-items: center; gap: 4.5rem; padding-right: 4.5rem; }
+  .marquee__list a { display: flex; align-items: center; height: 64px; color: var(--muted); text-decoration: none; filter: grayscale(1); opacity: .75; transition: opacity .25s, filter .25s, color .25s; }
+  .marquee__list a:hover, .marquee__list a:focus-visible { filter: none; opacity: 1; color: var(--fg-strong); }
+  .trust__name { font: 600 .8rem/1.3 var(--font-display); text-transform: uppercase; letter-spacing: .1em; white-space: nowrap; }
+  @keyframes marquee { to { transform: translateX(-50%); } }
+  /* Sin movimiento: la franja se queda fija y centrada, sin la copia */
+  @media (prefers-reduced-motion: reduce) {
+    .marquee { -webkit-mask-image: none; mask-image: none; }
+    .marquee__track { width: auto; justify-content: center; flex-wrap: wrap; }
+    .marquee__list { flex-wrap: wrap; justify-content: center; gap: 1.5rem 3rem; padding: 0; }
+    .marquee__list[aria-hidden] { display: none; }
+  }
+</style>
+
+<script>
+  // Progreso de scroll del hero (0 → 1) para el efecto de fusión
+  const hero = document.querySelector<HTMLElement>('[data-hero]');
+  if (hero) {
+    let ticking = false;
+    const update = () => {
+      const p = Math.min(1, Math.max(0, window.scrollY / (window.innerHeight * 0.9)));
+      hero.style.setProperty('--p', p.toFixed(3));
+      ticking = false;
+    };
+    window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+    update();
+  }
+  // Carrusel de proyectos destacados
+  const car = document.querySelector<HTMLElement>('[data-carousel]');
+  const move = (dir: number) => car?.scrollBy({ left: dir * (car.firstElementChild as HTMLElement).offsetWidth * 1.05, behavior: 'smooth' });
+  document.querySelector('[data-carousel-prev]')?.addEventListener('click', () => move(-1));
+  document.querySelector('[data-carousel-next]')?.addEventListener('click', () => move(1));
+</script>

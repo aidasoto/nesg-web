@@ -1,0 +1,24 @@
+# Fuente: https://produccioncientifica.ugr.es/proyectos/340906/detalle
+# Título oficial en español; el inglés es traducción → revisar.
+# TODO: summary / description (el portal no trae resumen). Líneas asignadas por el título → confirmar.
+title:
+  en: Exploring Internet Background Radiation traffic through a darknet based on home connections
+  es: Explorando el tráfico IBR mediante una darknet basada en conexiones domésticas
+type: research
+code: PPJIA2022-51
+funder: Universidad de Granada (Plan Propio)
+start: '2023-01-01'
+end: '2023-12-31'
+lines:
+- data-processing
+- intrusion-detection
+pi:
+- roberto-magan-carrion
+members:
+- pedro-garcia-teodoro
+- gabriel-macia-fernandez
+- jose-antonio-gomez-hernandez
+- margarita-robles-carrillo
+grantIds:
+- PPJIA2022-51
+source: https://produccioncientifica.ugr.es/proyectos/340906/detalle

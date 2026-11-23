@@ -1,0 +1,48 @@
+---
+import { getEntries, render } from 'astro:content';
+import { Image } from 'astro:assets';
+import Base from '@/layouts/Base.astro';
+import PageBar from '@/components/PageBar.astro';
+import { formatDate, l, langs, localize, useTranslations } from '@/i18n/utils';
+import type { Lang } from '@/i18n/ui';
+import { getNews, neighbours, newsSlug } from '@/lib/data';
+
+export async function getStaticPaths() {
+  const paths = [];
+  for (const lang of langs) {
+    for (const item of await getNews(lang)) paths.push({ params: { lang, slug: newsSlug(item).slug }, props: { item } });
+  }
+  return paths;
+}
+const { item } = Astro.props;
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const d = item.data;
+const { Content } = await render(item);
+const fallback = newsSlug(item).lang !== lang;
+const [people, projects, all] = await Promise.all([getEntries(d.people), getEntries(d.projects), getNews(lang)]);
+const nb = neighbours(all.map((n) => ({ id: n.id, n })), item.id);
+const href = (n: typeof item) => l(lang, `/news/${newsSlug(n).slug}/`);
+---
+
+<Base lang={lang} title={d.title} description={d.summary} surface="light">
+  <PageBar lang={lang}
+    crumbs={[{ label: t('nav.news'), href: l(lang, '/news/') }, { label: t(`news.${d.kind}`), href: l(lang, `/news/?kind=${d.kind}`) }, { label: d.title }]}
+    prev={all.length > 1 ? { label: nb.prev.n.data.title, href: href(nb.prev.n) } : undefined}
+    next={all.length > 1 ? { label: nb.next.n.data.title, href: href(nb.next.n) } : undefined} />
+  <article class="container section prose">
+    <p class="kicker">{t(`news.${d.kind}`)} · <time datetime={d.date.toISOString()}>{formatDate(d.date, lang)}</time></p>
+    <h1>{d.title}</h1>
+    {fallback && <p class="small muted" lang="en">{t('news.onlyEn')}</p>}
+    {d.eventDate && <p><strong>{formatDate(d.eventDate, lang, { dateStyle: 'full' })}</strong>{d.location && ` · ${d.location}`}</p>}
+    {d.image && <Image src={d.image} alt="" width={960} />}
+    <div lang={fallback ? 'en' : undefined}><Content /></div>
+    {(people.length > 0 || projects.length > 0) && (
+      <p class="small">{t('news.related')}:{' '}
+        {people.map((p) => <a class="tag" href={l(lang, `/team/${p.id}/`)}>{p.data.name}</a>)}
+        {projects.map((p) => <a class="tag" href={l(lang, `/projects/${p.id}/`)}>{p.data.acronym ?? localize(p.data.title, lang)}</a>)}
+      </p>
+    )}
+    <a class="back" href={l(lang, '/news/')}>← {t('news.back')}</a>
+  </article>
+</Base>

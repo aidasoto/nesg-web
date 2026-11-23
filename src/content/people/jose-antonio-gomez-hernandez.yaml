@@ -1,0 +1,9 @@
+# Fuente: https://produccioncientifica.ugr.es/investigadores/354759/detalle
+# Departamento: Lenguajes y Sistemas Informáticos
+name: José Antonio Gómez Hernández
+role: staff
+position: { en: Associate Professor, es: Profesor Titular de Universidad }
+orcid: 0000-0002-8235-7366
+openalex: A5072244388
+lines: [intrusion-detection, ethical-hacking] # TODO confirmar (tesis: detección de cripto-ransomware)
+order: 30

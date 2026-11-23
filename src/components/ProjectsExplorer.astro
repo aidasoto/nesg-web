@@ -1,0 +1,62 @@
+---
+/**
+ * Listado de proyectos en tarjetas. Pestañas Research/Transfer = páginas
+ * estáticas (submenú del diagrama); filtro Activo/Finalizado en cliente.
+ */
+import ProjectCard from '@/components/ProjectCard.astro';
+import Timeline from '@/components/charts/Timeline.astro';
+import { l, useTranslations } from '@/i18n/utils';
+import type { Lang } from '@/i18n/ui';
+import type { Project } from '@/lib/data';
+
+interface Props { projects: Project[]; lang: Lang; type?: 'research' | 'transfer' }
+const { projects, lang, type } = Astro.props;
+const t = useTranslations(lang);
+const list = type ? projects.filter((p) => p.data.type === type) : projects;
+const tabs = [
+  { href: l(lang, '/projects/'), label: t('projects.all'), current: !type },
+  { href: l(lang, '/projects/research/'), label: t('projects.research'), current: type === 'research' },
+  { href: l(lang, '/projects/transfer/'), label: t('projects.transfer'), current: type === 'transfer' },
+];
+---
+
+<div class="filters">
+  <nav class="tabs" aria-label={t('nav.projects')}>
+    {tabs.map((tab) => <a class="btn btn--ghost" href={tab.href} aria-current={tab.current ? 'page' : undefined}>{tab.label}</a>)}
+  </nav>
+  <div class="tabs" role="group" aria-label={t('projects.status')} data-status-filter>
+    <button class="btn btn--ghost" aria-pressed="true" data-status="">{t('projects.all')}</button>
+    <button class="btn btn--ghost" aria-pressed="false" data-status="active">{t('projects.active')}</button>
+    <button class="btn btn--ghost" aria-pressed="false" data-status="finished">{t('projects.finished')}</button>
+  </div>
+</div>
+
+<div data-projects-timeline><Timeline projects={list} lang={lang} title={t('charts.timeline')} /></div>
+
+<div class="grid" data-projects style="margin-top:1.5rem">
+  {list.map((p) => <ProjectCard project={p} lang={lang} />)}
+</div>
+<p data-empty hidden>{t('projects.none')}</p>
+
+<script>
+  const group = document.querySelector('[data-status-filter]');
+  const cards = [...document.querySelectorAll<HTMLElement>('[data-projects] > [data-status]')];
+  // El filtro de estado también se aplica a las filas del cronograma
+  const rows = [...document.querySelectorAll<HTMLElement>('[data-projects-timeline] li[data-status]')];
+  const empty = document.querySelector<HTMLElement>('[data-empty]')!;
+  const apply = (status: string) => {
+    group?.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.status === status)));
+    let n = 0;
+    cards.forEach((c) => { const show = !status || c.dataset.status === status; c.hidden = !show; n += +show; });
+    rows.forEach((r) => (r.hidden = !!status && r.dataset.status !== status));
+    empty.hidden = n > 0;
+    const url = new URL(location.href);
+    status ? url.searchParams.set('status', status) : url.searchParams.delete('status');
+    history.replaceState(null, '', url);
+  };
+  group?.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest('button');
+    if (b) apply(b.dataset.status ?? '');
+  });
+  apply(new URLSearchParams(location.search).get('status') ?? '');
+</script>

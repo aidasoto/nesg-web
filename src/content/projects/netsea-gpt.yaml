@@ -1,0 +1,25 @@
+# Fuente: https://produccioncientifica.ugr.es/proyectos/796099/detalle
+# Título oficial en inglés.
+# TODO: financiador (el portal no lo indica)
+# TODO: summary / description (el portal no trae resumen). Líneas asignadas por el título → confirmar.
+title:
+  en: 'NETSEA-GPT (Network Security Event Assistant-GPT): making network security events explainable'
+acronym: NETSEA-GPT
+type: research
+code: C-ING-300-UGR23
+start: '2024-01-01'
+end: '2026-12-31'
+lines:
+- intrusion-detection
+- data-processing
+pi:
+- roberto-magan-carrion
+members:
+- pedro-garcia-teodoro
+- gabriel-macia-fernandez
+- jose-antonio-gomez-hernandez
+- margarita-robles-carrillo
+featured: true
+grantIds:
+- C-ING-300-UGR23
+source: https://produccioncientifica.ugr.es/proyectos/796099/detalle

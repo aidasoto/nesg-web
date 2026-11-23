@@ -1,0 +1,98 @@
+---
+/**
+ * Equipo: toda la página en superficie clara.
+ * Filtros por sección (Dirección, Personal investigador, Colaboradores, Estudiantes I+D)
+ * en una barra fija; por defecto se ven todas en una rejilla continua, con la dirección
+ * destacada, para que de entrada se vea el equipo y no una sola tarjeta.
+ */
+import Base from '@/layouts/Base.astro';
+import PersonCard from '@/components/PersonCard.astro';
+import SectionNav from '@/components/SectionNav.astro';
+import { langPaths, useTranslations } from '@/i18n/utils';
+import type { Lang } from '@/i18n/ui';
+import { getPeople, getProjects, getPublications, projectsByPerson, pubsByPerson, ROLE_ORDER } from '@/lib/data';
+
+export const getStaticPaths = langPaths;
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const es = lang === 'es';
+const [people, pubs, projects] = await Promise.all([getPeople(), getPublications(), getProjects()]);
+const groups = ROLE_ORDER.map((role) => ({ role, people: people.filter((p) => p.data.role === role) })).filter((g) => g.people.length);
+const counts = (id: string) => ({ pubs: pubsByPerson(pubs, id).length, projects: projectsByPerson(projects, id).length });
+const doctors = people.filter((p) => p.data.role !== 'student').length;
+---
+
+<Base lang={lang} title={t('nav.team')} surface="light">
+  <section class="section--tight th">
+    <div class="container th__grid">
+      <div>
+        <p class="section-head__idx">// TEAM · {String(people.length).padStart(2, '0')}</p>
+        <h1>{t('nav.team')}</h1>
+        <p class="th__lead">{es
+          ? 'Investigadores de Telemática, Informática y Derecho que trabajan juntos en seguridad de redes.'
+          : 'Researchers from telematics, computer science and law working together on network security.'}</p>
+      </div>
+      <div class="stats reveal">
+        <div class="stat"><span class="stat__value" data-countup={people.length}>{people.length}</span><span class="stat__label">{es ? 'miembros' : 'members'}</span></div>
+        <div class="stat"><span class="stat__value" data-countup={doctors}>{doctors}</span><span class="stat__label">{t('home.stats.researchers')}</span></div>
+        <div class="stat"><span class="stat__value" data-countup={pubs.length}>{pubs.length}</span><span class="stat__label">{t('home.stats.publications')}</span></div>
+      </div>
+    </div>
+  </section>
+
+  <SectionNav
+    mode="filter"
+    label={es ? 'Secciones' : 'Sections'}
+    allLabel={es ? 'Todo el equipo' : 'Whole team'}
+    total={people.length}
+    items={groups.map((g) => ({ id: g.role, label: t(`team.${g.role}`), count: g.people.length }))}
+  />
+
+  <section class="section team">
+    <div class="container">
+      <div class="team__grid">
+        <h2 class="team__sep team__sep--global">
+          <span class="section-head__idx">01</span>
+          {es ? 'Dirección y personal investigador' : 'Group head & staff'}
+          <span class="kicker">{groups.filter((g) => g.role === 'head' || g.role === 'staff').reduce((n, g) => n + g.people.length, 0)}</span>
+        </h2>
+        {groups.map((g, gi) => (
+          <>
+            <h2 class="team__sep" id={g.role} data-filter-item data-role={g.role}>
+              <span class="section-head__idx">{String(gi + 1).padStart(2, '0')}</span>
+              {t(`team.${g.role}`)}
+              <span class="kicker">{g.people.length}</span>
+            </h2>
+            {g.people.map((p) => (
+              <div class:list={['team__cell', g.role === 'head' && 'team__cell--featured', 'reveal']} data-filter-item data-role={g.role}>
+                <PersonCard person={p} lang={lang} featured={g.role === 'head'} compact={g.role === 'student'} counts={counts(p.id)} />
+              </div>
+            ))}
+          </>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .th { padding-top: 3rem; }
+  .th__grid { display: grid; gap: 2rem; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); align-items: end; }
+  @media (max-width: 900px) { .th__grid { grid-template-columns: 1fr; } }
+  .th h1 { font-size: clamp(2.4rem, 6vw, 5rem); margin-bottom: .75rem; }
+  .th__lead { font: 400 clamp(1.05rem, 1.8vw, 1.35rem)/1.45 var(--font-display); color: var(--muted); max-width: 44ch; margin: 0; }
+
+  .team { padding-top: 1.5rem; }
+  /* Rejilla continua: los títulos de sección ocupan una fila y la dirección dos columnas */
+  .team__grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); grid-auto-flow: row dense; }
+  .team__sep { grid-column: 1 / -1; display: flex; align-items: baseline; gap: .9rem; margin: 2rem 0 .25rem; padding-bottom: .75rem; border-bottom: 1px solid var(--border); font-size: clamp(1.3rem, 2.2vw, 1.7rem); }
+  .team__sep:first-child { margin-top: 0; }
+  .team__sep .kicker { margin-left: auto; }
+  .team__cell--featured { grid-column: span 2; }
+  @media (max-width: 700px) { .team__cell--featured { grid-column: auto; } }
+  /* Vista global: dirección + personal comparten título y fila (la tarjeta destacada no queda sola).
+     Al filtrar, cada sección muestra su propio título. */
+  :global(body:not([data-filtered='true'])) .team__sep[data-role='head'],
+  :global(body:not([data-filtered='true'])) .team__sep[data-role='staff'] { display: none; }
+  :global(body[data-filtered='true']) .team__sep--global { display: none; }
+</style>

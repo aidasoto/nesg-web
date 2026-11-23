@@ -1,0 +1,22 @@
+---
+import { formatDate, l, useTranslations } from '@/i18n/utils';
+import type { Lang } from '@/i18n/ui';
+import { newsSlug, type NewsItem } from '@/lib/data';
+
+interface Props { item: NewsItem; lang: Lang }
+const { item, lang } = Astro.props;
+const t = useTranslations(lang);
+const d = item.data;
+const { slug } = newsSlug(item);
+---
+
+<a class="card card--frame ncard" href={l(lang, `/news/${slug}/`)} data-kind={d.kind} data-text={`${d.title} ${d.summary}`.toLowerCase()}>
+  <div class="ncard__top"><span class="kicker kicker--accent">{t(`news.${d.kind}`)}</span><time class="kicker" datetime={d.date.toISOString()}>{formatDate(d.date, lang)}</time></div>
+  <h3>{d.title}</h3>
+  <p class="small muted">{d.summary}</p>
+</a>
+
+<style>
+  .ncard__top { display: flex; justify-content: space-between; gap: .5rem; }
+  .ncard h3 { margin-top: 1.2rem; }
+</style>

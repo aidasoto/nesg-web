@@ -1,0 +1,18 @@
+# Configuración de la ingesta. Los investigadores (ORCID) y proyectos (grantIds)
+# se leen directamente de src/content/, no se duplican aquí.
+
+# Email para el "polite pool" de OpenAlex (más cuota y prioridad). Recomendado.
+# Usar un buzón genérico del grupo, no uno personal.
+mailto: ""
+
+# Solo se importan trabajos publicados desde esta fecha.
+from_date: "2012-01-01"  # el grupo se crea el 25-06-2012
+
+# ROR de la UGR. Solo se usa para FILTRAR (el autor debe figurar con afiliación
+# UGR en el paper) si filter_by_institution es true. Evita homónimos, pero
+# pierde papers firmados desde otras instituciones (estancias, etapa previa).
+ror: "https://ror.org/04njjy449"
+filter_by_institution: false
+
+# Tipos de OpenAlex que se descartan
+exclude_types: [paratext, erratum, retraction, editorial, letter, peer-review]

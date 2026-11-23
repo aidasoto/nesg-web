@@ -1,0 +1,14 @@
+order: 2
+icon: shield
+title:
+  en: Intrusion detection and protection
+  es: Detección y protección frente a intrusiones
+short:
+  en: "Intrusion and anomaly detection in networked systems, botnets, reaction and tolerance mechanisms."
+  es: "Detección de intrusos y anomalías en sistemas en red, botnets, mecanismos de reacción y tolerancia."
+description:
+  en: |
+    TODO: long description (to be written by the group).
+  es: |
+    TODO: descripción larga (a redactar por el grupo).
+keywords: [intrusion, anomaly detection, botnet, denial of service, ddos, manet, ad hoc network, survivab, tolerance, malware, ransomware, network security]

@@ -1,0 +1,27 @@
+---
+import Base from '@/layouts/Base.astro';
+import LineCard from '@/components/LineCard.astro';
+import BarList from '@/components/charts/BarList.astro';
+import { l, langPaths, localize, useTranslations } from '@/i18n/utils';
+import type { Lang } from '@/i18n/ui';
+import { getLines, getPeople, getProjects, getPublications, lineCounts } from '@/lib/data';
+
+export const getStaticPaths = langPaths;
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const [lines, pubs, projects, people] = await Promise.all([getLines(), getPublications(), getProjects(), getPeople()]);
+const counts = Object.fromEntries(lines.map((ln) => [ln.id, lineCounts(ln.id, pubs, projects, people)]));
+---
+
+<Base lang={lang} title={t('nav.lines')}>
+  <section class="section surface-dark bg-grid">
+    <div class="container">
+      <div class="section-head"><div><span class="section-head__idx">// RESEARCH</span><h1>{t('nav.lines')}</h1><p class="muted">{t('home.lines.lead')}</p></div></div>
+      <div class="grid">{lines.map((line) => <LineCard line={line} lang={lang} counts={counts[line.id]} />)}</div>
+      <div style="margin-top:1rem">
+        <BarList title={t('charts.byLine')} unit={lang === 'es' ? 'publicaciones' : 'publications'}
+          rows={lines.map((ln) => ({ label: localize(ln.data.title, lang), value: counts[ln.id].pubs, href: l(lang, `/research-lines/${ln.id}/`) }))} />
+      </div>
+    </div>
+  </section>
+</Base>

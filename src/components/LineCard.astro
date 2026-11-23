@@ -1,0 +1,37 @@
+---
+import { l, localize } from '@/i18n/utils';
+import type { Lang } from '@/i18n/ui';
+import type { Line } from '@/lib/data';
+
+interface Props { line: Line; lang: Lang; counts?: { pubs: number; projects: number; people: number } }
+const { line, lang, counts } = Astro.props;
+const L = lang === 'es' ? { pubs: 'Publ.', projects: 'Proy.', people: 'Invest.' } : { pubs: 'Pubs', projects: 'Projects', people: 'People' };
+---
+
+<a class="card card--frame lcard" href={l(lang, `/research-lines/${line.id}/`)}>
+  <div class="lcard__top">
+    <span class="lcard__idx">{String(line.data.order).padStart(2, '0')}</span>
+    <svg class="lcard__arrow" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+  <h3>{localize(line.data.title, lang)}</h3>
+  <p class="small muted">{localize(line.data.short, lang)}</p>
+  {counts && (
+    <dl class="lcard__counts">
+      <div><dt>{L.pubs}</dt><dd>{counts.pubs}</dd></div>
+      <div><dt>{L.projects}</dt><dd>{counts.projects}</dd></div>
+      <div><dt>{L.people}</dt><dd>{counts.people}</dd></div>
+    </dl>
+  )}
+</a>
+
+<style>
+  .lcard { display: flex; flex-direction: column; min-height: 260px; }
+  .lcard__top { display: flex; justify-content: space-between; align-items: center; }
+  .lcard__idx { font: 600 .8rem var(--font-mono); color: var(--accent); letter-spacing: .1em; }
+  .lcard__arrow { color: var(--muted); transition: transform .25s var(--ease), color .25s; }
+  .lcard:hover .lcard__arrow { color: var(--accent); transform: translate(3px, -3px); }
+  .lcard h3 { font-size: 1.3rem; margin-top: 1.5rem; }
+  .lcard__counts { margin: auto 0 0; padding-top: 1rem; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px dashed var(--border); }
+  .lcard__counts dt { font: 500 .6rem var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+  .lcard__counts dd { margin: .2rem 0 0; font: 600 1.25rem var(--font-display); color: var(--fg-strong); font-variant-numeric: tabular-nums; }
+</style>

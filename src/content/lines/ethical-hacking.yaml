@@ -1,0 +1,14 @@
+order: 3
+icon: search
+title:
+  en: Ethical hacking and digital forensics
+  es: Hacking ético y análisis forense digital
+short:
+  en: "Security vulnerability analysis, ethical hacking and digital forensics."
+  es: "Análisis de vulnerabilidades de seguridad, hacking ético y análisis forense digital."
+description:
+  en: |
+    TODO: long description (to be written by the group).
+  es: |
+    TODO: descripción larga (a redactar por el grupo).
+keywords: [vulnerabilit, penetration test, forensic, honeypot, honeyfile, exploit, ethical hacking, fraud]

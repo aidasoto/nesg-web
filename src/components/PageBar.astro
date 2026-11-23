@@ -1,0 +1,69 @@
+---
+/**
+ * Barra de ficha bajo el menú: a la izquierda dónde estás (migas),
+ * a la derecha flechas al elemento anterior / siguiente.
+ * Se queda fija bajo el menú al hacer scroll.
+ */
+interface Link { label: string; href: string }
+interface Props { crumbs: { label: string; href?: string }[]; prev?: Link; next?: Link; lang: 'en' | 'es'; index?: [number, number] }
+const { crumbs, prev, next, lang, index } = Astro.props;
+const t = (en: string, es: string) => (lang === 'es' ? es : en);
+---
+
+<div class="pbar-wrap">
+  <div class="container">
+  <nav class="pbar" aria-label={t('Breadcrumb', 'Ruta')}>
+    <ol class="pbar__crumbs">
+      {crumbs.map((c, i) => (
+        <li>{c.href && i < crumbs.length - 1 ? <a href={c.href}>{c.label}</a> : <span aria-current={i === crumbs.length - 1 ? 'page' : undefined}>{c.label}</span>}</li>
+      ))}
+    </ol>
+    <div class="pbar__nav">
+      {index && <span class="pbar__idx">{String(index[0]).padStart(2, '0')}<span>/{String(index[1]).padStart(2, '0')}</span></span>}
+      {prev && (
+        <a href={prev.href} class="pbar__btn" rel="prev" title={`${t('Previous', 'Anterior')}: ${prev.label}`} aria-label={`${t('Previous', 'Anterior')}: ${prev.label}`}>
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      )}
+      {next && (
+        <a href={next.href} class="pbar__btn pbar__btn--next" rel="next" aria-label={`${t('Next', 'Siguiente')}: ${next.label}`}>
+          <span class="pbar__nextlabel"><small>{t('Next', 'Siguiente')}</small>{next.label}</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      )}
+    </div>
+  </nav>
+  </div>
+</div>
+
+<style>
+  .pbar-wrap { position: sticky; top: var(--header-h); z-index: 20; padding: .75rem 0; background: linear-gradient(var(--bg) 70%, transparent); }
+  .pbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    min-height: 52px; padding: .4rem .4rem .4rem 1rem;
+    background: var(--card); border: 1px solid var(--border); border-radius: 999px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, .06);
+  }
+  @media (min-width: 720px) { .pbar { padding-left: 1.4rem; padding-right: .5rem; } }
+  .pbar__crumbs { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: nowrap; min-width: 0; flex: 1; overflow: hidden; font: 500 .72rem/1.2 var(--font-mono); text-transform: uppercase; letter-spacing: .1em; }
+  .pbar__crumbs li { white-space: nowrap; color: var(--muted); }
+  .pbar__crumbs li:last-child { overflow: hidden; text-overflow: ellipsis; color: var(--fg-strong); min-width: 0; }
+  .pbar__crumbs li + li::before { content: '/'; margin: 0 .6rem; color: var(--accent); }
+  .pbar__crumbs a { color: var(--muted); text-decoration: none; }
+  .pbar__crumbs a:hover { color: var(--accent); }
+  .pbar__nav { display: flex; align-items: center; gap: .4rem; flex: none; }
+  .pbar__idx { font: 600 .8rem var(--font-mono); color: var(--fg-strong); margin-right: .5rem; font-variant-numeric: tabular-nums; }
+  .pbar__idx span { color: var(--muted); font-weight: 400; }
+  .pbar__btn { display: inline-flex; align-items: center; gap: .6rem; height: 40px; min-width: 40px; justify-content: center; border-radius: 999px; border: 1px solid var(--border); color: var(--fg); text-decoration: none; transition: background .2s, border-color .2s, color .2s; }
+  .pbar__btn:hover { border-color: var(--accent); color: var(--accent); }
+  .pbar__btn--next { padding: 0 .4rem 0 1rem; background: var(--accent-strong); border-color: var(--accent-strong); color: var(--accent-fg); }
+  .pbar__btn--next:hover { background: var(--accent); color: var(--accent-fg); }
+  .pbar__nextlabel { display: none; max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 .78rem/1.1 var(--font-body); text-align: left; }
+  .pbar__nextlabel small { display: block; font: 500 .6rem var(--font-mono); text-transform: uppercase; letter-spacing: .12em; opacity: .75; }
+  @media (min-width: 900px) { .pbar__nextlabel { display: block; } }
+  @media (max-width: 600px) {
+    .pbar { padding-left: 1rem; padding-right: .35rem; }
+    .pbar__idx { display: none; }
+    .pbar__crumbs li:not(:first-child):not(:last-child) { display: none; }
+  }
+</style>

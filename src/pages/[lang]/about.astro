@@ -1,0 +1,253 @@
+---
+/**
+ * Sobre NESG: cifras · historia y misión (+ hitos automáticos desde los proyectos) ·
+ * afiliación (logos) · instalaciones · colaboraciones y redes · únete al equipo.
+ */
+import { getCollection, getEntry, render } from 'astro:content';
+import Base from '@/layouts/Base.astro';
+import SectionNav from '@/components/SectionNav.astro';
+import { formatDate, l, langPaths, localize, md, useTranslations } from '@/i18n/utils';
+import type { Lang } from '@/i18n/ui';
+import { getPeople, getProjects, getPublications, stats } from '@/lib/data';
+import { site } from '@/config/site';
+
+export const getStaticPaths = langPaths;
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const es = lang === 'es';
+
+const page = (await getEntry('pages', `${lang}/about`)) ?? (await getEntry('pages', 'en/about'))!;
+const { Content } = await render(page);
+const [partners, vacancies, projects, people, pubs] = await Promise.all([
+  getCollection('partners'), getCollection('vacancies', (v) => v.data.open), getProjects(), getPeople(), getPublications(),
+]);
+partners.sort((a, b) => a.data.order - b.data.order);
+const institutions = partners.filter((p) => p.data.kind === 'institution');
+const collaborators = partners.filter((p) => !!p.data.collaboration);
+const funders = partners.filter((p) => p.data.kind === 'funder');
+const acyr = projects.find((p) => p.id === 'acyr-lab');
+
+// Hitos: creación del grupo + inicio de cada proyecto (automático)
+const founded = new Date(site.founded);
+const milestones = [
+  { date: founded, label: es ? 'Creación del NESG' : 'NESG is founded', note: 'Universidad de Granada', href: undefined as string | undefined, kind: 'founding' },
+  ...projects.map((p) => ({
+    date: p.data.start,
+    label: p.data.acronym ?? localize(p.data.title, lang),
+    note: p.data.type === 'transfer' ? t('projects.transfer') : t('projects.research'),
+    href: l(lang, `/projects/${p.id}/`),
+    kind: p.data.type,
+  })),
+].sort((a, b) => +a.date - +b.date);
+
+const sections = [
+  { id: 'history', label: t('about.history') },
+  { id: 'affiliation', label: es ? 'Afiliación' : 'Affiliation' },
+  { id: 'facilities', label: es ? 'Instalaciones' : 'Facilities' },
+  { id: 'collaborations', label: t('about.collab') },
+  { id: 'join', label: t('about.join') },
+];
+const KIND: Record<string, string> = es
+  ? { phd: 'Doctorado', postdoc: 'Postdoc', grant: 'Beca', tfg: 'TFG / TFM', tfm: 'TFM', other: 'Otra' }
+  : { phd: 'PhD', postdoc: 'Postdoc', grant: 'Grant', tfg: 'BSc / MSc thesis', tfm: 'MSc thesis', other: 'Other' };
+---
+
+<Base lang={lang} title={page.data.title} description={page.data.description}>
+  <!-- Cabecera -->
+  <section class="section surface-dark bg-grid ah">
+    <div class="container">
+      <p class="section-head__idx">// ABOUT · EST. {founded.getFullYear()}</p>
+      <h1>{page.data.title}</h1>
+      {page.data.lead && <p class="ah__lead reveal">{page.data.lead}</p>}
+      <div class="stats reveal ah__stats">
+        <div class="stat"><span class="stat__value">{founded.getFullYear()}</span><span class="stat__label">{es ? 'año de creación' : 'founded'}</span></div>
+        <div class="stat"><span class="stat__value" data-countup={people.length}>{people.length}</span><span class="stat__label">{es ? 'miembros' : 'members'}</span></div>
+        <div class="stat"><span class="stat__value" data-countup={projects.length}>{projects.length}</span><span class="stat__label">{t('nav.projects')}</span></div>
+        <div class="stat"><span class="stat__value" data-countup={pubs.length}>{pubs.length}</span><span class="stat__label">{t('home.stats.publications')}</span></div>
+        <div class="stat"><span class="stat__value" data-countup={stats.citations}>{stats.citations}</span><span class="stat__label">{t('home.stats.citations')}</span></div>
+      </div>
+    </div>
+  </section>
+
+  <SectionNav items={sections} label={es ? 'En esta página' : 'On this page'} />
+
+  <!-- 01 Historia y misión + hitos -->
+  <section id="history" class="section surface-dark">
+    <div class="container split">
+      <div>
+        <div class="section-head"><div><span class="section-head__idx">01</span><h2>{t('about.history')}</h2></div></div>
+        <div class="prose ah__prose reveal"><Content /></div>
+      </div>
+      <figure class="viz ms" aria-label={es ? 'Hitos' : 'Milestones'}>
+        <figcaption class="viz__head"><span class="kicker">{es ? 'Hitos' : 'Milestones'}</span><span class="kicker">{founded.getFullYear()} → {new Date().getFullYear()}</span></figcaption>
+        <ol class="list-plain ms__list">
+          {milestones.map((m, i) => {
+            const Tag = m.href ? 'a' : 'div';
+            return (
+              <li class:list={['ms__item', `ms__item--${m.kind}`]} style={`--i:${i}`}>
+                <span class="ms__year">{m.date.getFullYear()}</span>
+                <span class="ms__dot" aria-hidden="true"></span>
+                <Tag class="ms__body" href={m.href}>
+                  <strong>{m.label}</strong>
+                  <span>{m.note} · {formatDate(m.date, lang, { month: 'short', year: 'numeric' })}</span>
+                </Tag>
+              </li>
+            );
+          })}
+        </ol>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 02 Afiliación -->
+  <section id="affiliation" class="section surface-light">
+    <div class="container">
+      <div class="section-head"><div><span class="section-head__idx">02</span><h2>{es ? 'Afiliación institucional' : 'Institutional affiliation'}</h2></div></div>
+      <div class="aff">
+        {institutions.map((p, i) => (
+          <a class="card card--frame aff__card reveal" href={p.data.url} rel="noopener" style={`transition-delay:${i * 90}ms`}>
+            <span class="kicker">0{i + 1}</span>
+            <div class="aff__logo">{p.data.logo ? <img src={p.data.logo} alt={p.data.name} loading="lazy" /> : <span>{p.data.name}</span>}</div>
+            <h3>{p.data.name}</h3>
+            {p.data.url && <span class="aff__url">{p.data.url.replace(/^https?:\/\//, '')} ↗</span>}
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 Instalaciones -->
+  <section id="facilities" class="section surface-dark bg-grid">
+    <div class="container split split--even">
+      <div>
+        <div class="section-head"><div><span class="section-head__idx">03</span><h2>{es ? 'Instalaciones y recursos' : 'Facilities and resources'}</h2></div></div>
+        <div class="prose reveal" set:html={md(page.data.facilities)} />
+      </div>
+      {acyr && (
+        <a class="card card--frame lab reveal" href={l(lang, `/projects/${acyr.id}/`)}>
+          <span class="kicker kicker--accent">{acyr.data.code}</span>
+          <p class="lab__acr">{acyr.data.acronym}</p>
+          <h3>{localize(acyr.data.title, lang)}</h3>
+          <dl class="lab__meta">
+            <div><dt>{t('projects.funder')}</dt><dd>{acyr.data.funder}</dd></div>
+            <div><dt>{t('projects.dates')}</dt><dd>{acyr.data.start.getFullYear()}–{acyr.data.end?.getFullYear()}</dd></div>
+          </dl>
+          <span class="lab__go">{t('common.readMore')} →</span>
+        </a>
+      )}
+    </div>
+  </section>
+
+  <!-- 04 Colaboraciones y redes -->
+  <section id="collaborations" class="section surface-light">
+    <div class="container">
+      <div class="section-head"><div><span class="section-head__idx">04</span><h2>{t('about.collab')}</h2></div></div>
+      <div class="grid">
+        {collaborators.map((p, i) => (
+          <article class="card card--frame reveal" style={`transition-delay:${i * 90}ms`}>
+            <span class="kicker">{p.data.kind}</span>
+            {p.data.logo && <img class="collab__logo" src={p.data.logo} alt="" loading="lazy" />}
+            <h3>{p.data.url ? <a href={p.data.url} rel="noopener">{p.data.name}</a> : p.data.name}</h3>
+            <p class="small muted">{localize(p.data.collaboration, lang)}</p>
+          </article>
+        ))}
+      </div>
+      {funders.length > 0 && (
+        <>
+          <p class="kicker funders__title">{es ? 'Financiación' : 'Funding'}</p>
+          <ul class="list-plain funders">
+            {funders.map((p) => <li>{p.data.logo ? <img src={p.data.logo} alt={p.data.name} /> : p.data.name}</li>)}
+          </ul>
+        </>
+      )}
+    </div>
+  </section>
+
+  <!-- 05 Únete -->
+  <section id="join" class="section surface-dark">
+    <div class="container">
+      <div class="section-head"><div><span class="section-head__idx">05</span><h2>{t('about.join')}</h2></div></div>
+      <div class="grid">
+        {vacancies.map((v, i) => (
+          <article class="card card--frame vac reveal" style={`transition-delay:${i * 90}ms`}>
+            <div class="vac__top"><span class="kicker kicker--accent">{KIND[v.data.kind]}</span><span class="status status--active">{es ? 'Abierta' : 'Open'}</span></div>
+            <h3>{localize(v.data.title, lang)}</h3>
+            <div class="small muted" set:html={md(localize(v.data.description, lang))} />
+            {v.data.deadline && <p class="kicker">{t('about.deadline')}: {formatDate(v.data.deadline, lang)}</p>}
+            <div class="vac__links">
+              {v.data.contact && <a href={l(lang, `/team/${v.data.contact.id}/`)}>{es ? 'Persona de contacto' : 'Contact person'} →</a>}
+              {v.data.url && <a href={v.data.url} rel="noopener">{t('common.readMore')} ↗</a>}
+            </div>
+          </article>
+        ))}
+        <article class="card cta reveal">
+          <h3>{es ? '¿Quieres colaborar con el NESG?' : 'Want to work with NESG?'}</h3>
+          <p class="small">{vacancies.length === 0 ? t('about.join.none') : (es ? 'Escríbenos aunque no veas una plaza que encaje contigo.' : "Get in touch even if you don't see a matching position.")}</p>
+          <div class="cta__btns">
+            <a class="btn btn--primary" href={l(lang, '/contact/')}>{t('nav.contact')} →</a>
+            <a class="btn" href={site.github} rel="noopener">GitHub ↗</a>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .ah { padding-bottom: 3rem; }
+  .ah h1 { font-size: clamp(2.4rem, 6vw, 5rem); margin-bottom: 1rem; }
+  .ah__lead { font: 400 clamp(1.15rem, 2.2vw, 1.75rem)/1.4 var(--font-display); color: var(--fg); max-width: 46ch; margin: 0 0 2.5rem; }
+  .ah__stats .stat__value { color: var(--fg-strong); }
+
+  .split { display: grid; gap: clamp(2rem, 5vw, 5rem); grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; }
+  .split--even { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; }
+  @media (max-width: 960px) { .split, .split--even { grid-template-columns: 1fr; } }
+  .ah__prose { font-size: 1.08rem; line-height: 1.75; }
+  .ah__prose :global(p:first-child) { font: 400 clamp(1.2rem, 1.8vw, 1.45rem)/1.5 var(--font-display); color: var(--fg-strong); }
+
+  /* Hitos */
+  .ms { position: sticky; top: calc(var(--header-h) + 90px); }
+  .ms__list { position: relative; }
+  .ms__list::before { content: ''; position: absolute; left: 3.6rem; top: .4rem; bottom: .4rem; border-left: 1px dashed var(--border); }
+  .ms__item { display: grid; grid-template-columns: 3rem 1.2rem 1fr; align-items: start; gap: .6rem; padding: .45rem 0; opacity: 0; transform: translateX(-8px); transition: opacity .5s var(--ease) calc(var(--i) * 70ms), transform .5s var(--ease) calc(var(--i) * 70ms); }
+  :global(.viz.is-in) .ms__item { opacity: 1; transform: none; }
+  .ms__year { font: 600 .8rem var(--font-mono); color: var(--muted); padding-top: .15rem; text-align: right; }
+  .ms__dot { width: 11px; height: 11px; margin: .3rem 0 0 .05rem; border-radius: 50%; background: var(--card); border: 2px solid var(--s1); position: relative; z-index: 1; }
+  .ms__item--transfer .ms__dot { border-color: var(--s2); }
+  .ms__item--founding .ms__dot { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+  .ms__body { display: grid; gap: .1rem; color: var(--fg); text-decoration: none; border-radius: 6px; }
+  a.ms__body:hover strong { color: var(--accent); }
+  .ms__body strong { font-weight: 600; font-size: .92rem; line-height: 1.3; }
+  .ms__body span { font: .7rem var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+
+  /* Afiliación */
+  .aff { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+  .aff__card { display: flex; flex-direction: column; gap: .75rem; min-height: 280px; }
+  .aff__logo { flex: 1; display: grid; place-items: center; min-height: 130px; padding: 1rem 0; }
+  .aff__logo img { max-height: 96px; max-width: 100%; width: auto; object-fit: contain; }
+  .aff__logo span { font: 600 1rem var(--font-display); color: var(--fg-strong); text-align: center; }
+  .aff__card h3 { margin: .25rem 0 0; font-size: 1.05rem; }
+  .aff__url { font: .72rem var(--font-mono); color: var(--accent); }
+
+  /* Laboratorio */
+  .lab { padding: 2rem; }
+  .lab__acr { font: 600 2.4rem/1 var(--font-display); color: var(--accent); margin: 1rem 0 .5rem; letter-spacing: -.02em; }
+  .lab__meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; padding-top: 1rem; border-top: 1px dashed var(--border); }
+  .lab__meta dt { font: 500 .65rem var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+  .lab__meta dd { margin: .25rem 0 0; font-size: .9rem; }
+  .lab__go { font: 500 .75rem var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--accent); }
+
+  .collab__logo { display: block; height: 40px; width: auto; margin: 1rem 0 .25rem; }
+  .funders__title { margin: 3rem 0 1rem; }
+  .funders { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .funders li { font: 500 .75rem var(--font-mono); text-transform: uppercase; letter-spacing: .06em; padding: .55rem .85rem; border: 1px solid var(--border); border-radius: 999px; }
+  .funders img { height: 32px; width: auto; display: block; }
+
+  .vac { display: flex; flex-direction: column; gap: .4rem; }
+  .vac__top { display: flex; justify-content: space-between; align-items: center; }
+  .vac__links { margin-top: auto; display: flex; gap: 1rem; flex-wrap: wrap; font: 500 .75rem var(--font-mono); text-transform: uppercase; letter-spacing: .06em; padding-top: .75rem; }
+  .vac__links a { text-decoration: none; }
+  .cta { background: linear-gradient(135deg, var(--accent-soft), var(--card)); border-color: var(--accent); display: flex; flex-direction: column; gap: .5rem; }
+  .cta h3 { font-size: 1.35rem; }
+  .cta__btns { margin-top: auto; display: flex; gap: .5rem; flex-wrap: wrap; padding-top: 1rem; }
+</style>

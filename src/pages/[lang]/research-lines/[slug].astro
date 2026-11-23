@@ -1,0 +1,94 @@
+---
+/** Ficha de línea: cabecera, miembros, proyectos y publicaciones recientes (todo automático). */
+import Base from '@/layouts/Base.astro';
+import PageBar from '@/components/PageBar.astro';
+import PersonCard from '@/components/PersonCard.astro';
+import ProjectCard from '@/components/ProjectCard.astro';
+import PubItem from '@/components/PubItem.astro';
+import YearStack from '@/components/charts/YearStack.astro';
+import BarList from '@/components/charts/BarList.astro';
+import { l, langs, localize, md, useTranslations } from '@/i18n/utils';
+import type { Lang } from '@/i18n/ui';
+import { getLines, getPeople, getProjects, getPublications, neighbours, peopleByLine, projectsByLine, pubsByLine, pubsByPerson } from '@/lib/data';
+
+export async function getStaticPaths() {
+  const lines = await getLines();
+  return langs.flatMap((lang) => lines.map((line) => ({ params: { lang, slug: line.id }, props: { line } })));
+}
+const { line } = Astro.props;
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+
+const [lines, people, projects, pubs] = await Promise.all([getLines(), getPeople(), getProjects(), getPublications()]);
+const nb = neighbours(lines, line.id);
+const members = peopleByLine(people, line.id);
+const related = projectsByLine(projects, line.id);
+const linePubs = pubsByLine(pubs, line.id);
+const title = localize(line.data.title, lang);
+const contributors = people.map((p) => ({ label: p.data.name, value: pubsByPerson(linePubs, p.id).length, href: l(lang, `/team/${p.id}/`) }))
+  .filter((r) => r.value > 0).sort((a, b) => b.value - a.value).slice(0, 8);
+---
+
+<Base lang={lang} title={title} description={localize(line.data.short, lang)}>
+  <PageBar
+    lang={lang}
+    crumbs={[{ label: t('nav.lines'), href: l(lang, '/research-lines/') }, { label: title }]}
+    prev={{ label: localize(nb.prev.data.title, lang), href: l(lang, `/research-lines/${nb.prev.id}/`) }}
+    next={{ label: localize(nb.next.data.title, lang), href: l(lang, `/research-lines/${nb.next.id}/`) }}
+    index={[nb.index, nb.total]}
+  />
+  <section class="section--tight">
+    <div class="container">
+      <p class="section-head__idx">{String(line.data.order).padStart(2, '0')} / {String(lines.length).padStart(2, '0')}</p>
+      <h1>{title}</h1>
+      <p class="lead">{localize(line.data.short, lang)}</p>
+      <div class="prose" set:html={md(localize(line.data.description, lang))} />
+      <div class="stats reveal" style="margin-top:2rem">
+        <div class="stat"><span class="stat__value">{linePubs.length}</span><span class="stat__label">{t('home.stats.publications')}</span></div>
+        <div class="stat"><span class="stat__value">{related.length}</span><span class="stat__label">{t('nav.projects')}</span></div>
+        <div class="stat"><span class="stat__value">{members.length}</span><span class="stat__label">{t('lines.members')}</span></div>
+        <div class="stat"><span class="stat__value">{linePubs.reduce((s, p) => s + p.data.citations, 0)}</span><span class="stat__label">{t('home.stats.citations')}</span></div>
+      </div>
+      {linePubs.length >= 3 && (
+        <div class="viz-row" style="margin-top:1rem">
+          <YearStack pubs={linePubs} lang={lang} title={t('charts.perYearType')} height={200} />
+          <BarList rows={contributors} title={t('charts.byPerson')} unit={lang === 'es' ? 'publicaciones' : 'publications'} />
+        </div>
+      )}
+    </div>
+  </section>
+
+  {members.length > 0 && (
+    <section class="section surface-light">
+      <div class="container">
+        <div class="section-head"><div><span class="section-head__idx">01</span><h2>{t('lines.members')}</h2></div></div>
+        <div class="grid">{members.map((p) => <PersonCard person={p} lang={lang} compact />)}</div>
+      </div>
+    </section>
+  )}
+
+  {related.length > 0 && (
+    <section class="section">
+      <div class="container">
+        <div class="section-head"><div><span class="section-head__idx">02</span><h2>{t('lines.projects')}</h2></div></div>
+        <div class="grid">{related.map((p) => <ProjectCard project={p} lang={lang} />)}</div>
+      </div>
+    </section>
+  )}
+
+  {linePubs.length > 0 && (
+    <section class="section surface-light">
+      <div class="container">
+        <div class="section-head">
+          <div><span class="section-head__idx">03</span><h2>{t('lines.publications')}</h2></div>
+          <a href={l(lang, `/publications/?line=${line.id}`)}>{t('lines.allPubs')} ({linePubs.length}) →</a>
+        </div>
+        <ul class="list-plain">{linePubs.slice(0, 10).map((pub) => <PubItem pub={pub} lang={lang} />)}</ul>
+      </div>
+    </section>
+  )}
+</Base>
+
+<style>
+  .lead { font: 400 clamp(1.1rem, 2vw, 1.4rem)/1.45 var(--font-display); color: var(--fg); max-width: 50ch; }
+</style>

@@ -1,0 +1,104 @@
+---
+/**
+ * Barra segmentada 100 % (composición por tipo) + leyenda con recuento y %.
+ * Si tiene `id`, puede enlazarse a un YearStack (prop `link`): al pulsar un año
+ * muestra el desglose de ese año; al pulsar fuera vuelve al global.
+ */
+import type { Lang } from '@/i18n/ui';
+import type { Publication } from '@/lib/data';
+import { TYPE_GROUPS, pubsByYear, typeTotals } from '@/lib/charts';
+
+interface Props { pubs: Publication[]; lang: Lang; title: string; id?: string }
+const { pubs, lang, title, id } = Astro.props;
+const totals = typeTotals(pubs);
+const n = pubs.length || 1;
+const t = (en: string, es: string) => (lang === 'es' ? es : en);
+
+// Desglose fino de "Libros y capítulos" para el tooltip
+const books = pubs.filter((p) => p.data.type === 'book').length;
+const chapters = pubs.filter((p) => p.data.type === 'book-chapter').length;
+
+// Datos por año para la vista enlazada (solo si se va a enlazar)
+const years = id
+  ? Object.fromEntries(pubsByYear(pubs).filter((r) => r.total).map((r) => [r.year, Object.fromEntries(TYPE_GROUPS.map((g) => [g.id, r[g.id]]))]))
+  : null;
+const labels = Object.fromEntries(TYPE_GROUPS.map((g) => [g.id, g.label[lang]]));
+---
+
+{pubs.length > 0 && (
+<figure class="viz comp" id={id} data-comp={id ? JSON.stringify({ years, global: totals, labels }) : undefined}>
+  <figcaption class="viz__head">
+    <span class="kicker">{title}</span>
+    <span class="kicker comp__scope"><span data-comp-year></span>n = <span data-comp-n>{pubs.length}</span></span>
+  </figcaption>
+  <div class="comp__bar" role="img" aria-label={`${title}: ${TYPE_GROUPS.map((g) => `${g.label[lang]} ${totals[g.id]}`).join(', ')}`}>
+    {TYPE_GROUPS.map((g, i) => {
+      const extra = g.id === 'book' && books && chapters ? ` (${chapters} ${t('chapters', 'capítulos')} · ${books} ${t('books', 'libros')})` : '';
+      return (
+        <span data-group={g.id} hidden={totals[g.id] === 0} style={`flex-grow:${totals[g.id]};background:${g.color};--i:${i}`}
+          data-tip={`<i style="background:${g.color}"></i>${g.label[lang]}: <b>${totals[g.id]}</b> · ${((totals[g.id] / n) * 100).toFixed(0)}%${extra}`}></span>
+      );
+    })}
+  </div>
+  <ul class="comp__legend list-plain">
+    {TYPE_GROUPS.map((g) => (
+      <li data-group={g.id} class:list={[totals[g.id] === 0 && 'is-zero']}>
+        <i style={`background:${g.color}`}></i>
+        <span>{g.label[lang]}</span>
+        <b data-v>{totals[g.id]}</b>
+        <span class="muted" data-pct>{((totals[g.id] / n) * 100).toFixed(0)}%</span>
+      </li>
+    ))}
+  </ul>
+  {id && <p class="comp__hint kicker" data-comp-hint>{t('Click a year in the chart to see its breakdown', 'Pulsa un año de la gráfica para ver su desglose')}</p>}
+</figure>
+)}
+
+<style>
+  .comp__bar { display: flex; gap: 2px; height: 18px; border-radius: 5px; overflow: hidden; }
+  .comp__bar span { flex-basis: 0; min-width: 3px; transform-origin: left; transform: scaleX(0); transition: transform .8s var(--ease) calc(var(--i) * 80ms), flex-grow .5s var(--ease); }
+  :global(.viz.is-in) .comp__bar span { transform: none; }
+  .comp__legend { margin-top: 1rem; display: grid; gap: .45rem; font-size: .85rem; }
+  .comp__legend li { display: grid; grid-template-columns: 12px 1fr auto 3.2rem; gap: .6rem; align-items: center; transition: opacity .3s; }
+  .comp__legend li.is-zero { opacity: .35; }
+  .comp__legend i { width: 10px; height: 10px; border-radius: 3px; }
+  .comp__legend b { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .comp__legend [data-pct] { text-align: right; font: .75rem var(--font-mono); }
+  .comp__scope [data-comp-year]:not(:empty) { color: var(--accent); margin-right: .5rem; }
+  .comp__hint { margin: 1.25rem 0 0; padding-top: .9rem; border-top: 1px dashed var(--border); }
+</style>
+
+<script>
+  type Data = { years: Record<string, Record<string, number>>; global: Record<string, number>; labels: Record<string, string> };
+  document.querySelectorAll<HTMLElement>('[data-comp]').forEach((fig) => {
+    const data: Data = JSON.parse(fig.dataset.comp!);
+    const segs = fig.querySelectorAll<HTMLElement>('.comp__bar [data-group]');
+    const rows = fig.querySelectorAll<HTMLElement>('.comp__legend [data-group]');
+    const yearEl = fig.querySelector<HTMLElement>('[data-comp-year]')!;
+    const nEl = fig.querySelector<HTMLElement>('[data-comp-n]')!;
+    const hint = fig.querySelector<HTMLElement>('[data-comp-hint]');
+    const hintText = hint?.textContent ?? '';
+    const es = document.documentElement.lang === 'es';
+
+    fig.addEventListener('comp:year', (e) => {
+      const year = (e as CustomEvent<string | null>).detail;
+      const vals = year ? data.years[year] : data.global;
+      const n = Object.values(vals).reduce((a, b) => a + b, 0) || 1;
+      segs.forEach((s) => {
+        const v = vals[s.dataset.group!] ?? 0;
+        s.hidden = v === 0;
+        s.style.flexGrow = String(v);
+        s.dataset.tip = `<i style="background:${s.style.background}"></i>${data.labels[s.dataset.group!]}: <b>${v}</b> · ${Math.round((v / n) * 100)}%`;
+      });
+      rows.forEach((r) => {
+        const v = vals[r.dataset.group!] ?? 0;
+        r.querySelector('[data-v]')!.textContent = String(v);
+        r.querySelector('[data-pct]')!.textContent = `${Math.round((v / n) * 100)}%`;
+        r.classList.toggle('is-zero', v === 0);
+      });
+      yearEl.textContent = year ?? '';
+      nEl.textContent = String(n);
+      if (hint) hint.textContent = year ? (es ? 'Pulsa fuera de la gráfica para volver al total' : 'Click outside the chart to go back to the total') : hintText;
+    });
+  });
+</script>

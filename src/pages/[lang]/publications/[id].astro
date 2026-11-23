@@ -1,0 +1,102 @@
+---
+/** Ficha de publicación: título, autores (enlazados), editor, áreas, abstract y enlaces. */
+import { getEntries } from 'astro:content';
+import Base from '@/layouts/Base.astro';
+import PageBar from '@/components/PageBar.astro';
+import { l, langs, localize, useTranslations } from '@/i18n/utils';
+import type { Lang, UIKey } from '@/i18n/ui';
+import { getPublications, neighbours } from '@/lib/data';
+import { TYPE_GROUPS, typeGroup } from '@/lib/charts';
+
+export async function getStaticPaths() {
+  const pubs = await getPublications();
+  return langs.flatMap((lang) => pubs.map((pub) => ({ params: { lang, id: pub.id }, props: { pub } })));
+}
+const { pub } = Astro.props;
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const d = pub.data;
+const [all, lines, projects] = await Promise.all([getPublications(), getEntries(d.lines), getEntries(d.projects)]);
+const nb = neighbours(all, pub.id);
+const linkOrder = ['doi', 'pdf', 'oa', 'code', 'dataset'] as const;
+const color = TYPE_GROUPS.find((g) => g.id === typeGroup(d.type))!.color;
+const short = (s: string) => (s.length > 60 ? `${s.slice(0, 57)}…` : s);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ScholarlyArticle',
+  headline: d.title,
+  datePublished: d.date ?? String(d.year),
+  author: d.authors.map((a) => ({ '@type': 'Person', name: a.name, ...(a.orcid && { sameAs: `https://orcid.org/${a.orcid}` }) })),
+  isPartOf: d.venue ?? undefined,
+  publisher: d.publisher ?? undefined,
+  abstract: d.abstract ?? undefined,
+  sameAs: d.links.doi,
+};
+---
+
+<Base lang={lang} title={d.title} description={d.abstract?.slice(0, 160) ?? d.venue ?? undefined} jsonLd={jsonLd} surface="light">
+  <!-- Highwire tags: los usa Google Scholar para indexar -->
+  <Fragment slot="head">
+    <meta name="citation_title" content={d.title} />
+    {d.authors.map((a) => <meta name="citation_author" content={a.name} />)}
+    <meta name="citation_publication_date" content={(d.date ?? String(d.year)).replaceAll('-', '/')} />
+    {d.venue && <meta name={d.type === 'conference-paper' ? 'citation_conference_title' : 'citation_journal_title'} content={d.venue} />}
+    {d.doi && <meta name="citation_doi" content={d.doi} />}
+    {d.links.pdf && <meta name="citation_pdf_url" content={d.links.pdf} />}
+  </Fragment>
+
+  <PageBar
+    lang={lang}
+    crumbs={[{ label: t('nav.publications'), href: l(lang, '/publications/') }, { label: String(d.year), href: l(lang, `/publications/?year=${d.year}`) }, { label: t(`pubtype.${d.type}` as UIKey) }]}
+    prev={{ label: short(nb.prev.data.title), href: l(lang, `/publications/${nb.prev.id}/`) }}
+    next={{ label: short(nb.next.data.title), href: l(lang, `/publications/${nb.next.id}/`) }}
+  />
+
+  <article class="container pubpage">
+    <header class="pubh">
+      <p class="pubh__type"><i style={`background:${color}`}></i>{t(`pubtype.${d.type}` as UIKey)} · {d.year}{d.openAccess && <span class="tag">Open access</span>}</p>
+      <h1>{d.title}</h1>
+      <p class="pubh__authors">
+        {d.authors.map((a, i) => (
+          <>{a.person ? <a href={l(lang, `/team/${a.person.id}/`)}><strong>{a.name}</strong></a> : a.name}{i < d.authors.length - 1 && ', '}</>
+        ))}
+      </p>
+    </header>
+
+    <div class="pubgrid">
+      <div>
+        {d.abstract && <section><p class="kicker">{t('pubs.abstract')}</p><p class="prose pub-abstract">{d.abstract}</p></section>}
+        <div class="links">
+          {linkOrder.filter((k) => d.links[k]).map((k, i) => (
+            <a class:list={['btn', i === 0 && 'btn--primary']} href={d.links[k]} rel="noopener">{t(`link.${k}` as UIKey)} ↗</a>
+          ))}
+        </div>
+      </div>
+      <dl class="spec">
+        {d.venue && <div><dt>{t('pubs.venue')}</dt><dd><em>{d.venue}</em></dd></div>}
+        {d.publisher && <div><dt>{t('pubs.publisher')}</dt><dd>{d.publisher}</dd></div>}
+        {d.doi && <div><dt>DOI</dt><dd><code>{d.doi}</code></dd></div>}
+        <div><dt>{t('pubs.citations')}</dt><dd><strong>{d.citations}</strong></dd></div>
+        {lines.length > 0 && <div><dt>{t('pubs.areas')}</dt><dd>{lines.map((ln) => <a class="tag" href={l(lang, `/research-lines/${ln.id}/`)}>{localize(ln.data.title, lang)}</a>)}</dd></div>}
+        {projects.length > 0 && <div><dt>{t('pubs.projects')}</dt><dd>{projects.map((p) => <a class="tag" href={l(lang, `/projects/${p.id}/`)}>{p.data.acronym ?? p.data.code ?? localize(p.data.title, lang)}</a>)}</dd></div>}
+      </dl>
+    </div>
+
+    <a class="back" href={l(lang, '/publications/')}>← {t('pubs.back')}</a>
+  </article>
+</Base>
+
+<style>
+  .pubpage { padding-bottom: 5rem; }
+  .pubh { padding: 2.5rem 0 2rem; max-width: 62rem; }
+  .pubh__type { display: flex; align-items: center; gap: .6rem; font: 500 .72rem var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+  .pubh__type i { width: 10px; height: 10px; border-radius: 3px; }
+  .pubh h1 { font-size: clamp(1.6rem, 3.2vw, 2.5rem); line-height: 1.15; }
+  .pubh__authors { color: var(--muted); }
+  .pubh__authors a { color: var(--fg-strong); }
+  .pubgrid { display: grid; gap: 2rem; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: start; }
+  @media (max-width: 900px) { .pubgrid { grid-template-columns: 1fr; } }
+  .pub-abstract { font-size: 1.02rem; line-height: 1.7; }
+  .links { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 2rem; }
+</style>

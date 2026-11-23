@@ -1,0 +1,120 @@
+---
+/**
+ * Buscador + filtros + paginación de publicaciones, 100 % en cliente.
+ * Todas las publicaciones se renderizan en el HTML (bueno para SEO y sin JS
+ * funciona como listado completo); el script solo oculta/muestra.
+ * Estado en la URL (?q=&year=&author=&type=&line=&sort=&page=) para poder
+ * enlazar listados filtrados desde fichas de persona o línea.
+ */
+import PubItem from '@/components/PubItem.astro';
+import { localize, useTranslations } from '@/i18n/utils';
+import type { Lang, UIKey } from '@/i18n/ui';
+import { pubDate, type Line, type Person, type Publication } from '@/lib/data';
+
+interface Props { pubs: Publication[]; people: Person[]; lines: Line[]; lang: Lang; pageSize?: number }
+const { pubs, people, lines, lang, pageSize = 20 } = Astro.props;
+const t = useTranslations(lang);
+
+const years = [...new Set(pubs.map((p) => p.data.year))].sort((a, b) => b - a);
+const types = [...new Set(pubs.map((p) => p.data.type))];
+const authorsWithPubs = people.filter((person) => pubs.some((p) => p.data.authors.some((a) => a.person?.id === person.id)));
+const attrs = (p: Publication) => ({
+  'data-year': p.data.year,
+  'data-type': p.data.type,
+  'data-date': pubDate(p),
+  'data-cites': p.data.citations,
+  'data-authors': ` ${p.data.authors.map((a) => a.person?.id).filter(Boolean).join(' ')} `,
+  'data-lines': ` ${p.data.lines.map((r) => r.id).join(' ')} `,
+  'data-text': [p.data.title, p.data.venue, ...p.data.authors.map((a) => a.name)].join(' ').toLowerCase(),
+});
+---
+
+<form class="filters" data-pubs-form role="search" onsubmit="return false">
+  <label>{t('nav.search')}<input type="search" name="q" placeholder={t('pubs.search')} /></label>
+  <label>{t('pubs.year')}
+    <select name="year"><option value="">{t('pubs.any')}</option>{years.map((y) => <option>{y}</option>)}</select>
+  </label>
+  <label>{t('pubs.author')}
+    <select name="author"><option value="">{t('pubs.any')}</option>{authorsWithPubs.map((p) => <option value={p.id}>{p.data.name}</option>)}</select>
+  </label>
+  <label>{t('pubs.type')}
+    <select name="type"><option value="">{t('pubs.any')}</option>{types.map((ty) => <option value={ty}>{t(`pubtype.${ty}` as UIKey)}</option>)}</select>
+  </label>
+  <label>{t('pubs.line')}
+    <select name="line"><option value="">{t('pubs.any')}</option>{lines.map((ln) => <option value={ln.id}>{localize(ln.data.title, lang)}</option>)}</select>
+  </label>
+  <label>{t('pubs.sort')}
+    <select name="sort">
+      <option value="newest">{t('pubs.sort.newest')}</option>
+      <option value="oldest">{t('pubs.sort.oldest')}</option>
+      <option value="cited">{t('pubs.sort.cited')}</option>
+    </select>
+  </label>
+  <button type="reset" class="btn btn--ghost">{t('pubs.clear')}</button>
+</form>
+
+<p class="small muted" aria-live="polite"><span data-count>{pubs.length}</span> {t('pubs.results')}</p>
+<ul class="list-plain" data-pubs data-page-size={pageSize}>
+  {pubs.map((pub) => <PubItem pub={pub} lang={lang} attrs={attrs(pub)} />)}
+</ul>
+<p data-empty hidden>{t('pubs.none')}</p>
+<nav class="pager" data-pager hidden aria-label="Pagination">
+  <button class="btn btn--ghost" data-prev>← {t('pubs.prev')}</button>
+  <span data-page class="small"></span>
+  <button class="btn btn--ghost" data-next>{t('pubs.next')} →</button>
+</nav>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-pubs-form]')!;
+  const list = document.querySelector<HTMLElement>('[data-pubs]')!;
+  const items = [...list.children] as HTMLElement[];
+  const pageSize = Number(list.dataset.pageSize);
+  const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s)!;
+  const keys = ['q', 'year', 'author', 'type', 'line', 'sort'] as const;
+  let page = 1;
+
+  // Estado inicial desde la URL
+  const params = new URLSearchParams(location.search);
+  keys.forEach((k) => { const v = params.get(k); if (v) (form.elements.namedItem(k) as HTMLInputElement).value = v; });
+  page = Number(params.get('page')) || 1;
+
+  function render(resetPage = false) {
+    if (resetPage) page = 1;
+    const f = Object.fromEntries(keys.map((k) => [k, (form.elements.namedItem(k) as HTMLInputElement).value.trim()]));
+    const q = f.q.toLowerCase();
+    const match = items.filter((el) => {
+      const d = el.dataset;
+      return (!q || d.text!.includes(q)) && (!f.year || d.year === f.year) && (!f.type || d.type === f.type)
+        && (!f.author || d.authors!.includes(` ${f.author} `)) && (!f.line || d.lines!.includes(` ${f.line} `));
+    });
+    const cmp: Record<string, (a: HTMLElement, b: HTMLElement) => number> = {
+      newest: (a, b) => b.dataset.date!.localeCompare(a.dataset.date!),
+      oldest: (a, b) => a.dataset.date!.localeCompare(b.dataset.date!),
+      cited: (a, b) => Number(b.dataset.cites) - Number(a.dataset.cites),
+    };
+    match.sort(cmp[f.sort] ?? cmp.newest);
+    const pages = Math.max(1, Math.ceil(match.length / pageSize));
+    page = Math.min(page, pages);
+    const visible = new Set(match.slice((page - 1) * pageSize, page * pageSize));
+
+    items.forEach((el) => (el.hidden = !visible.has(el)));
+    match.forEach((el) => list.appendChild(el)); // reordenar
+    $('[data-count]').textContent = String(match.length);
+    $('[data-empty]').hidden = match.length > 0;
+    $('[data-pager]').hidden = pages <= 1;
+    $('[data-page]').textContent = `${page} / ${pages}`;
+    $<HTMLButtonElement>('[data-prev]').disabled = page <= 1;
+    $<HTMLButtonElement>('[data-next]').disabled = page >= pages;
+
+    const url = new URL(location.href);
+    keys.forEach((k) => (f[k] && !(k === 'sort' && f[k] === 'newest') ? url.searchParams.set(k, f[k]) : url.searchParams.delete(k)));
+    page > 1 ? url.searchParams.set('page', String(page)) : url.searchParams.delete('page');
+    history.replaceState(null, '', url);
+  }
+
+  form.addEventListener('input', () => render(true));
+  form.addEventListener('reset', () => setTimeout(() => render(true)));
+  $('[data-prev]').addEventListener('click', () => { page--; render(); list.scrollIntoView({ behavior: 'smooth' }); });
+  $('[data-next]').addEventListener('click', () => { page++; render(); list.scrollIntoView({ behavior: 'smooth' }); });
+  render();
+</script>

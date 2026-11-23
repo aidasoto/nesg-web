@@ -1,0 +1,11 @@
+# Fuente: https://produccioncientifica.ugr.es/investigadores/357260/detalle
+name: Roberto Magán Carrión
+role: staff
+position: { en: Associate Professor, es: Profesor Titular de Universidad }
+orcid: 0000-0002-7744-7308
+openalex: A5085366817
+lines: [intrusion-detection, data-processing] # TODO confirmar
+links:
+  scholar: https://scholar.google.com/citations?user=xJdPMqgAAAAJ
+  dblp: https://dblp.org/pid/129/7544
+order: 20

@@ -1,0 +1,9 @@
+# Fuente: https://produccioncientifica.ugr.es/investigadores/357002/detalle
+name: Pedro García Teodoro
+role: head
+position: { en: Full Professor, es: Catedrático de Universidad }
+orcid: 0000-0001-6766-1936
+openalex: A5005706756
+email: pgteodor@ugr.es
+lines: [intrusion-detection, data-processing] # TODO confirmar (inferido de proyectos y tesis dirigidas)
+order: 1

@@ -1,0 +1,6 @@
+name: ETSIIT
+kind: institution
+url: https://etsiit.ugr.es
+logo: /assets/logos/etsiit-horizontal-color-transparente.png # versión sin fondo (la original es la -bi.png)
+trust: true
+order: 2

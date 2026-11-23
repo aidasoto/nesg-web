@@ -1,0 +1,22 @@
+# Fuente: https://produccioncientifica.ugr.es/proyectos/261888/detalle
+# Título oficial en español; el inglés es traducción → revisar.
+# TODO: summary / description (el portal no trae resumen). Líneas asignadas por el título → confirmar.
+title:
+  en: Intelligent network event visualisation for security handling and analysis
+  es: Visualización de eventos en red inteligente para el tratamiento y análisis de la seguridad
+type: research
+code: TIN2014-60346-R
+funder: Ministerio de Economía y Competitividad (Plan Estatal I+D+i)
+start: '2015-01-01'
+end: '2018-12-31'
+lines:
+- data-processing
+- intrusion-detection
+pi:
+- gabriel-macia-fernandez
+members:
+- pedro-garcia-teodoro
+- roberto-magan-carrion
+grantIds:
+- TIN2014-60346-R
+source: https://produccioncientifica.ugr.es/proyectos/261888/detalle

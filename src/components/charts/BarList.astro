@@ -1,0 +1,38 @@
+---
+/** Barras horizontales de una sola serie (sin leyenda: el título la nombra). Filas enlazables. */
+interface Row { label: string; value: number; href?: string; note?: string }
+interface Props { rows: Row[]; title: string; unit?: string; color?: string }
+const { rows, title, unit = '', color = 'var(--s1)' } = Astro.props;
+const max = Math.max(1, ...rows.map((r) => r.value));
+---
+
+{rows.length > 0 && (
+<figure class="viz bl">
+  <figcaption class="viz__head"><span class="kicker">{title}</span></figcaption>
+  <ul class="list-plain bl__rows">
+    {rows.map((r, i) => {
+      const Tag = r.href ? 'a' : 'div';
+      return (
+        <li>
+          <Tag class="bl__row" href={r.href} data-tip={`<b>${r.label}</b>: ${r.value} ${unit}${r.note ? `<br>${r.note}` : ''}`}>
+            <span class="bl__label">{r.label}</span>
+            <span class="bl__track"><span class="bl__bar" style={`width:${(r.value / max) * 100}%;background:${color};--i:${i}`}></span></span>
+            <span class="bl__val">{r.value}</span>
+          </Tag>
+        </li>
+      );
+    })}
+  </ul>
+</figure>
+)}
+
+<style>
+  .bl__rows { display: grid; gap: .55rem; }
+  .bl__row { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr) 2.5rem; gap: .75rem; align-items: center; color: var(--fg); text-decoration: none; font-size: .85rem; padding: .15rem 0; }
+  a.bl__row:hover .bl__label { color: var(--accent); }
+  .bl__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bl__track { height: 10px; }
+  .bl__bar { display: block; height: 100%; border-radius: 0 4px 4px 0; transform-origin: left; transform: scaleX(0); transition: transform .8s var(--ease) calc(var(--i) * 60ms); }
+  :global(.viz.is-in) .bl__bar { transform: none; }
+  .bl__val { text-align: right; font: 600 .8rem var(--font-mono); font-variant-numeric: tabular-nums; }
+</style>

@@ -1,0 +1,19 @@
+# Fuente: https://produccioncientifica.ugr.es/proyectos/263365/detalle
+# Título oficial en español; el inglés es traducción → revisar.
+# TODO: summary / description (el portal no trae resumen). Líneas asignadas por el título → confirmar.
+title:
+  en: Advanced Cybersecurity Research Lab
+  es: Laboratorio avanzado de investigación en ciberseguridad
+acronym: ACYR-LAB
+type: research
+code: EQC2018-004692-P
+funder: Ministerio de Ciencia, Innovación y Universidades (equipamiento científico-técnico)
+start: '2018-01-01'
+end: '2021-03-31'
+lines: []
+pi:
+- pedro-garcia-teodoro
+members: []
+grantIds:
+- EQC2018-004692-P
+source: https://produccioncientifica.ugr.es/proyectos/263365/detalle

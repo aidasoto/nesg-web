@@ -1,0 +1,13 @@
+[project]
+name = "nesg-ingest"
+version = "0.1.0"
+description = "Ingesta de publicaciones del NESG (OpenAlex, ORCID...) → JSON para el build estático"
+requires-python = ">=3.11"
+dependencies = ["pyyaml>=6"]
+
+[project.scripts]
+nesg-ingest = "nesg_ingest.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
