@@ -5,13 +5,13 @@
      componentes solo usan tokens, así funcionan en ambas.
    - Tema: por defecto oscuro. html[data-theme="light"] (toggle del hero)
      convierte las superficies oscuras en claras y conserva la alternancia.
-   - Acento: teal / verde azulado marino.
+   - Paleta: #042F40 (azul petróleo) · #1B677E · #ABC3CB · #DFDFDF.
    - Series de gráficas validadas (CVD + contraste) en ambos modos.
    ========================================================================= */
 
 :root {
-  --font-display: 'Space Grotesk Variable', 'Space Grotesk', system-ui, sans-serif;
-  --font-body: 'Inter Variable', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Sansation', system-ui, sans-serif;
+  --font-body: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
   --radius: 14px;
   --radius-sm: 8px;
@@ -19,30 +19,39 @@
   --gutter: 50px; /* margen lateral de todas las páginas (20px en móvil) */
   --header-h: 72px;
   --ease: cubic-bezier(.2, .7, .2, 1);
+  --lime: #b9e04a; /* lima de marca (decorativo: barras, índices, signos); el mismo de las gráficas */
 }
 
 /* ---- Superficie oscura (por defecto) ---- */
 :root,
 .surface-dark {
-  --bg: #0a0d0f;
-  --bg-alt: #12171a;
-  --card: #161c1f;
-  --fg: #e6ecea;
+  --bg: #042f40;
+  --bg-alt: #032634;
+  --card: #0a3b4f;
+  --fg: #dfdfdf;
   --fg-strong: #ffffff;
-  --muted: #8d9a97;
-  --border: #253034;
-  --grid: rgba(120, 200, 190, .07);
-  --accent: #3cc4b4;
-  --accent-strong: #1d9c8e;
-  --accent-fg: #03120f;
-  --accent-soft: rgba(60, 196, 180, .12);
-  --ok: #3cc48a;
-  /* series de gráficas (modo oscuro, validadas contra #14181b) */
-  --s1: #1d9c8e;
-  --s2: #c4841c;
-  --s3: #6b7ee0;
-  --s4: #d0587a;
-  --s-other: #56625f;
+  --muted: #abc3cb;
+  --border: #1a4b5e;
+  --grid: rgba(171, 195, 203, .07);
+  --accent: #6db8cf;
+  --accent-strong: #4a9bb3;
+  --accent-fg: #042f40;
+  --accent-soft: rgba(109, 184, 207, .14);
+  --ok: var(--lime); /* estados "en directo" (OpenAlex, proyecto activo, vacante abierta): mismo lima que las tarjetas */
+  /* series de gráficas (modo oscuro, sobre #0a3b4f): azul + lima suave,
+     un tono oscuro y otro claro de cada familia. Separación CVD validada. */
+  --s1: #3a8ca6; /* azul medio */
+  --s2: #b9e04a; /* lima */
+  --s3: #a3d0dd; /* azul hielo */
+  --s4: #7ea33a; /* oliva */
+  /* etiquetas de tipo (texto blanco >= 4,5:1) + borde con el color de la serie para recortarlas del fondo oscuro */
+  --tag-1: #1b5a70; --tag-2: #557d14; --tag-3: #367a91; --tag-4: #33500f;
+  --tag-1-edge: var(--s1); --tag-2-edge: var(--s2); --tag-3-edge: var(--s3); --tag-4-edge: var(--s4);
+  --s-other: #5c7a86;
+  --viz-glow: .55; /* intensidad del halo de las marcas */
+  --lime: #b9e04a; /* lima de marca sobre oscuro */
+  --viz-hl: #ffffff; /* punto de destacado */
+  --viz-hl-glow: rgba(255, 255, 255, .8);
   color-scheme: dark;
 }
 
@@ -50,29 +59,37 @@
 .surface-light,
 :root[data-theme='light'] .surface-dark,
 :root[data-theme='light'] {
-  --bg: #eceeed;
-  --bg-alt: #e2e6e4;
-  --card: #f6f7f6;
-  --fg: #111816;
-  --fg-strong: #050807;
-  --muted: #4d5a57;
-  --border: #cbd3d0;
-  --grid: rgba(0, 90, 80, .06);
-  --accent: #006e66;
-  --accent-strong: #00897a;
+  --bg: #dfdfdf;
+  --bg-alt: #d3d8da;
+  --card: #f2f2f2;
+  --fg: #042f40;
+  --fg-strong: #021c27;
+  --muted: #46606b;
+  --border: #abc3cb;
+  --grid: rgba(27, 103, 126, .07);
+  --accent: #1b677e;
+  --accent-strong: #042f40;
   --accent-fg: #ffffff;
-  --accent-soft: rgba(0, 137, 122, .1);
-  --ok: #0a7d4a;
-  /* series (modo claro, validadas contra #eceeed) */
-  --s1: #00897a;
-  --s2: #b87400;
-  --s3: #4f62d6;
-  --s4: #d0507a;
-  --s-other: #9aa5a2;
+  --accent-soft: rgba(27, 103, 126, .12);
+  --ok: var(--lime);
+  /* series (modo claro, sobre #f2f2f2): misma paleta oscurecida.
+     s2/s3 quedan en ~2,6:1 de contraste → apoyadas en leyenda, tooltip y tabla. */
+  --s1: #1b677e;
+  --s2: #7ea520;
+  --s3: #4f9db5;
+  --s4: #4a7419;
+  /* etiquetas de tipo (texto blanco >= 4,5:1) */
+  --tag-1: #123f4e; --tag-2: #557d14; --tag-3: #367a91; --tag-4: #33500f;
+  --tag-1-edge: transparent; --tag-2-edge: transparent; --tag-3-edge: transparent; --tag-4-edge: transparent;
+  --s-other: #8fa5ad;
+  --viz-glow: 0;
+  --lime: #8aae2c; /* lima algo más oscuro para leerse sobre claro (2,3:1 frente a 1,4:1) */
+  --viz-hl: #042f40;
+  --viz-hl-glow: rgba(4, 47, 64, .35);
   color-scheme: light;
 }
 /* En tema claro, las secciones "claras" pasan a un gris algo más hondo para mantener la alternancia */
-:root[data-theme='light'] .surface-light { --bg: #dfe4e2; --bg-alt: #d5dbd8; --card: #eef1f0; }
+:root[data-theme='light'] .surface-light { --bg: #d2d8da; --bg-alt: #c8d0d3; --card: #ececec; }
 
 /* ------------------------------------------------------------------------- */
 
@@ -152,14 +169,32 @@ code, .mono { font-family: var(--font-mono); font-size: .85em; }
   text-decoration: none;
   transition: border-color .2s, transform .2s var(--ease), background .2s;
 }
-a.card:hover { border-color: var(--accent); transform: translateY(-2px); }
-.card h3 { margin: .4rem 0 .5rem; }
-/* esquinas de "visor" en tarjetas técnicas */
-.card--frame::before, .card--frame::after {
-  content: ''; position: absolute; width: 10px; height: 10px; border-color: var(--accent); border-style: solid; opacity: .7;
+a.card:hover { transform: translateY(-3px); }
+.card h3 { margin: .4rem 0 .5rem; font-weight: 700; }
+
+/* ---- Estilo "ficha" (diseño de las líneas de investigación), común a todas las tarjetas ----
+   Sin borde ni esquinas de visor: la tarjeta se recorta por su fondo. */
+.card { border-color: transparent; }
+.card--frame::before, .card--frame::after { display: none; }
+/* Barra lima bajo el título; se alarga al pasar el ratón por la tarjeta */
+.card__bar { display: block; width: 44px; height: 4px; background: var(--lime); transition: width .35s var(--ease); }
+a.card:hover .card__bar, .card:has(a:hover) .card__bar { width: 88px; }
+/* Atajo: barra automática tras el h3 en tarjetas sencillas */
+.card--bar h3::after { content: ''; display: block; width: 44px; height: 4px; margin-top: 1rem; background: var(--lime); transition: width .35s var(--ease); }
+a.card--bar:hover h3::after, .card--bar:has(a:hover) h3::after { width: 88px; }
+.card__title { margin: 0; font: 700 1.45rem/1.12 var(--font-display); letter-spacing: -.01em; color: var(--fg-strong); }
+.card__idx { flex-shrink: 0; font: 400 1.45rem/1.12 var(--font-display); color: var(--lime); letter-spacing: -.02em; }
+/* Cifras con "+" lima: <dl class="card-stats" style="--cols:3"><div><dt>…</dt><dd>…</dd></div>… */
+.card-stats { display: grid; grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); gap: .75rem; margin: 0; }
+.card-stats > div { min-width: 0; }
+.card-stats > div::before {
+  content: ''; display: block; width: 15px; height: 15px; margin-bottom: .8rem;
+  background: linear-gradient(var(--lime), var(--lime)) center / 100% 2.5px no-repeat, linear-gradient(var(--lime), var(--lime)) center / 2.5px 100% no-repeat;
 }
-.card--frame::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; border-top-left-radius: var(--radius); }
-.card--frame::after { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; border-bottom-right-radius: var(--radius); }
+.card-stats dt { font: 500 .68rem/1 var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--fg-strong); white-space: nowrap; }
+.card-stats dd { margin: .5rem 0 0; font: 700 1.5rem/1 var(--font-display); color: var(--fg-strong); font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-stats--text dd { font-size: 1.02rem; line-height: 1.25; white-space: normal; }
+.card-stats abbr { text-decoration: none; }
 
 /* ---- Botones ---- */
 .btn {
@@ -230,16 +265,18 @@ a.tag:hover { border-color: var(--accent); color: var(--accent); }
 .prose h2 { font-size: 1.5rem; margin-top: 2.5rem; }
 .back { display: inline-block; margin-top: 3rem; font: 500 .8rem/1 var(--font-mono); text-transform: uppercase; letter-spacing: .08em; text-decoration: none; }
 
-/* ---- Tooltip global de gráficas ---- */
+/* ---- Tooltip global de gráficas (estilo terminal) ---- */
 .viz-tip {
-  position: fixed; z-index: 200; pointer-events: none; max-width: 260px;
-  background: #050708; color: #e6ecea; border: 1px solid #2c383c; border-radius: var(--radius-sm);
-  padding: .55rem .7rem; font: .78rem/1.45 var(--font-mono); box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
+  position: fixed; z-index: 200; pointer-events: none; max-width: 280px;
+  background: rgba(2, 28, 39, .96); color: #dfdfdf; border: 1px solid #1a4b5e; border-left: 2px solid #6db8cf; border-radius: 2px;
+  padding: .55rem .75rem; font: .74rem/1.55 var(--font-mono); letter-spacing: .01em;
+  box-shadow: 0 0 0 1px rgba(109, 184, 207, .08), 0 10px 28px rgba(0, 0, 0, .45);
+  backdrop-filter: blur(6px);
   opacity: 0; transform: translateY(4px); transition: opacity .12s, transform .12s;
 }
 .viz-tip.is-on { opacity: 1; transform: none; }
 .viz-tip b { color: #fff; font-weight: 600; }
-.viz-tip i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: .4rem; font-style: normal; }
+.viz-tip i { display: inline-block; width: 8px; height: 8px; border-radius: 1px; margin-right: .45rem; font-style: normal; }
 
 /* Animación de entrada para gráficas y bloques */
 .reveal { opacity: 0; transform: translateY(16px); transition: opacity .7s var(--ease), transform .7s var(--ease); }
@@ -250,15 +287,30 @@ a.tag:hover { border-color: var(--accent); color: var(--accent); }
   .reveal { opacity: 1; transform: none; }
 }
 
-/* ---- Gráficas: piezas comunes ---- */
-.viz { margin: 0; padding: 1.25rem; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); min-width: 0; }
-.viz__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .5rem 1.25rem; margin-bottom: 1rem; }
-.viz__legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .3rem 1rem; font-size: .78rem; color: var(--muted); }
-.viz__legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: .4rem; vertical-align: -1px; }
-.viz__legend b { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; margin-left: .2rem; }
-.viz__grid line { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2 4; }
-.viz__grid text, .viz__xlabel, .viz__axis text { fill: var(--muted); font: 10px var(--font-mono); }
-.viz__base { stroke: var(--muted); stroke-width: 1; opacity: .6; }
+/* ---- Gráficas: piezas comunes (estética HUD / terminal) ---- */
+.viz {
+  --viz-corner: color-mix(in srgb, var(--accent) 70%, transparent);
+  position: relative; margin: 0; padding: 1.25rem; min-width: 0;
+  background:
+    radial-gradient(circle, var(--grid) 1px, transparent 1.2px) 0 0 / 14px 14px,
+    var(--card);
+  border: 1px solid var(--border); border-radius: 4px;
+}
+/* Esquinas tipo visor en dos vértices opuestos */
+.viz::before, .viz::after { content: ''; position: absolute; width: 12px; height: 12px; pointer-events: none; }
+.viz::before { top: -1px; left: -1px; border-top: 2px solid var(--viz-corner); border-left: 2px solid var(--viz-corner); border-top-left-radius: 4px; }
+.viz::after { bottom: -1px; right: -1px; border-bottom: 2px solid var(--viz-corner); border-right: 2px solid var(--viz-corner); border-bottom-right-radius: 4px; }
+.viz__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .5rem 1.25rem; margin-bottom: 1rem; padding-bottom: .75rem; border-bottom: 1px dashed var(--border); }
+.viz__head > .kicker:first-child { color: var(--fg); }
+.viz__head > .kicker:first-child::before { content: '//'; color: var(--accent); margin-right: .55em; letter-spacing: 0; }
+.viz__legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .3rem 1rem; font: .7rem var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.viz__legend i { display: inline-block; width: 8px; height: 8px; border-radius: 1px; margin-right: .45rem; vertical-align: 0; }
+.viz__legend b { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; margin-left: .25rem; }
+.viz__grid line { stroke: var(--border); stroke-width: 1; stroke-dasharray: 1 3; }
+.viz__grid text, .viz__xlabel, .viz__axis text { fill: var(--muted); font: 10px var(--font-mono); letter-spacing: .04em; }
+.viz__base { stroke: var(--accent); stroke-width: 1; opacity: .5; }
+/* Halo suave en las marcas (solo en oscuro: --viz-glow = 0 en claro) */
+.viz-glow { filter: drop-shadow(0 0 5px color-mix(in srgb, currentColor calc(var(--viz-glow) * 100%), transparent)); }
 .viz__table { margin-top: .75rem; font-size: .8rem; }
 .viz__table summary { cursor: pointer; font: 500 .68rem/1 var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
 .viz__table table { width: 100%; border-collapse: collapse; margin-top: .75rem; font-variant-numeric: tabular-nums; }
