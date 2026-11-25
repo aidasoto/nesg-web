@@ -1,4 +1,10 @@
 ---
+/**
+ * Tarjeta de proyecto (estilo "ficha"): acrónimo grande + estado, barra lima,
+ * título completo / resumen y cifras con "+" lima (tipo y periodo).
+ * Dentro de una rejilla comparte filas con sus vecinas (subgrid) para alinear
+ * título, barra, texto y cifras entre tarjetas.
+ */
 import { l, localize, useTranslations } from '@/i18n/utils';
 import type { Lang } from '@/i18n/ui';
 import { projectStatus, type Project } from '@/lib/data';
@@ -8,29 +14,45 @@ const { project, lang } = Astro.props;
 const t = useTranslations(lang);
 const d = project.data;
 const status = projectStatus(project);
+const title = localize(d.title, lang);
+const es = lang === 'es';
+const period = `${d.start.getFullYear()}–${d.end?.getFullYear() ?? ''}`;
 ---
 
-<a class="card card--frame pcard" href={l(lang, `/projects/${project.id}/`)} data-type={d.type} data-status={status}>
-  <div class="pcard__top">
-    <span class="kicker">{t(`projects.${d.type}`)}</span>
+<a class="card pcard" href={l(lang, `/projects/${project.id}/`)} data-type={d.type} data-status={status}>
+  <div class="pcard__head">
     <span class:list={['status', status === 'active' && 'status--active']}>{t(`projects.${status}`)}</span>
+    <h3 class:list={['card__title', 'pcard__title', !d.acronym && 'pcard__title--long']} title={d.acronym ? undefined : title}>{d.acronym ?? title}</h3>
   </div>
-  {d.logo && <img src={d.logo} alt="" class="pcard__logo" loading="lazy" />}
-  {d.acronym && <p class="pcard__acr">{d.acronym}</p>}
-  <h3>{localize(d.title, lang)}</h3>
-  {d.summary && <p class="small muted">{localize(d.summary, lang)}</p>}
-  <div class="pcard__meta">
-    {d.code && <code>{d.code}</code>}
-    <span>{d.start.getFullYear()}—{d.end?.getFullYear() ?? ''}</span>
+  <span class="card__bar pcard__bar" aria-hidden="true"></span>
+  <div class="pcard__desc">
+    {d.logo && <img src={d.logo} alt="" class="pcard__logo" loading="lazy" />}
+    {d.acronym && <p class="pcard__full">{title}</p>}
+    {!d.acronym && title.length > 70 && <p class="pcard__full">{title}</p>}
+    {d.summary && <p class="pcard__sum">{localize(d.summary, lang)}</p>}
+    {d.code && <code class="pcard__code">{d.code}</code>}
   </div>
+  <dl class="card-stats card-stats--text pcard__stats" style="--cols:2">
+    <div><dt>{es ? 'Tipo' : 'Type'}</dt><dd>{t(`projects.${d.type}`)}</dd></div>
+    <div><dt>{es ? 'Periodo' : 'Period'}</dt><dd>{period}</dd></div>
+  </dl>
 </a>
 
 <style>
-  .pcard { display: flex; flex-direction: column; min-height: 240px; }
-  .pcard__top { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
-  .pcard__acr { margin: 1rem 0 0; font: 600 .85rem var(--font-mono); color: var(--accent); letter-spacing: .06em; }
-  .pcard h3 { font-size: 1.05rem; line-height: 1.3; margin-top: .5rem; }
-  .pcard__meta { margin-top: auto; padding-top: .9rem; border-top: 1px dashed var(--border); display: flex; justify-content: space-between; gap: .5rem; font: .72rem var(--font-mono); color: var(--muted); }
-  .pcard__meta code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .pcard__logo { margin-top: 1rem; max-height: 48px; width: auto; }
+  .pcard {
+    display: grid; grid-row: span 4; grid-template-rows: subgrid; row-gap: 0;
+    padding: 1.6rem 1.6rem 1.5rem;
+  }
+  /* Fuera de una rejilla (p. ej. carrusel) se comporta como columna normal */
+  .pcard__head { display: flex; flex-direction: column; align-items: flex-start; gap: .9rem; min-width: 0; }
+  .pcard__title { max-width: 100%; overflow-wrap: break-word; }
+  /* Sin acrónimo: el título largo va en grande recortado a 3 líneas (completo en el texto de abajo) */
+  .pcard__title--long { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; font-size: 1.25rem; line-height: 1.18; }
+  .pcard__bar { align-self: start; margin-top: 1.25rem; }
+  .pcard__desc { margin-top: 1.1rem; display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
+  .pcard__full { margin: 0; font: 500 .98rem/1.4 var(--font-body); color: var(--fg-strong); }
+  .pcard__sum { margin: 0; font: 400 .9rem/1.5 var(--font-body); color: var(--fg); }
+  .pcard__code { font: .72rem var(--font-mono); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pcard__logo { max-height: 44px; width: auto; align-self: flex-start; }
+  .pcard__stats { align-self: end; padding-top: 2rem; }
 </style>

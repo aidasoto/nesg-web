@@ -27,42 +27,40 @@ const es = lang === 'es';
     : <span class="person__photo person__photo--ph" aria-hidden="true">{initials}</span>}
   <div class="person__body">
     {note && <span class="kicker kicker--accent">{note}</span>}
-    <h3>{d.name}</h3>
+    <h3 class="person__name">{d.name}</h3>
     {d.position && <p class="person__pos">{localize(d.position, lang)}</p>}
+    {!compact && <span class="card__bar person__bar" aria-hidden="true"></span>}
     {!compact && lines.length > 0 && <ul class="person__lines list-plain">{lines.map((ln) => <li>{localize(ln.data.title, lang)}</li>)}</ul>}
     {counts && (counts.pubs > 0 || counts.projects > 0) && (
-      <dl class="person__counts">
-        <div><dt>{es ? 'Publ.' : 'Pubs'}</dt><dd>{counts.pubs}</dd></div>
-        <div><dt>{es ? 'Proy.' : 'Projects'}</dt><dd>{counts.projects}</dd></div>
+      <dl class="card-stats person__counts" style="--cols:2">
+        <div><dt><abbr title={es ? 'Publicaciones' : 'Publications'}>{es ? 'Publ.' : 'Pubs'}</abbr></dt><dd>{counts.pubs}</dd></div>
+        <div><dt><abbr title={es ? 'Proyectos' : 'Projects'}>{es ? 'Proy.' : 'Proj.'}</abbr></dt><dd>{counts.projects}</dd></div>
       </dl>
     )}
   </div>
-  <svg class="person__arrow" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
 </a>
 
 <style>
   .person { display: flex; gap: 1.1rem; align-items: flex-start; height: 100%; }
   .person__body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-  .person h3 { margin: .1rem 0 .2rem; font-size: 1.1rem; }
+  .person { padding: 1.5rem; }
+  .person__name { margin: .1rem 0 .3rem; font: 700 1.2rem/1.15 var(--font-display); letter-spacing: -.01em; color: var(--fg-strong); }
+  .person__bar { margin: .2rem 0 1rem; }
   .person__pos { margin: 0 0 .7rem; font: .78rem var(--font-mono); color: var(--muted); }
   .person__photo { width: 76px; height: 76px; border-radius: 12px; object-fit: cover; flex: none; filter: grayscale(1) contrast(1.05); transition: filter .3s; }
   .person:hover .person__photo { filter: none; }
   .person__photo--ph { display: grid; place-items: center; background: var(--accent-soft); border: 1px solid var(--border); color: var(--accent); font: 600 1.1rem var(--font-mono); letter-spacing: .05em; }
   .person__lines { display: grid; gap: .3rem; margin-bottom: .9rem; font-size: .82rem; line-height: 1.3; color: var(--fg); }
   .person__lines li { display: flex; gap: .5rem; align-items: baseline; }
-  .person__lines li::before { content: ''; flex: none; width: 6px; height: 6px; border-radius: 2px; background: var(--accent); transform: translateY(-1px); }
-  .person__counts { display: flex; gap: 1.5rem; margin: auto 0 0; padding-top: .75rem; border-top: 1px dashed var(--border); }
-  .person__counts dt { font: 500 .6rem var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
-  .person__counts dd { margin: .1rem 0 0; font: 600 1.1rem var(--font-display); color: var(--fg-strong); font-variant-numeric: tabular-nums; }
-  .person__arrow { flex: none; color: var(--muted); transition: transform .25s var(--ease), color .25s; }
-  .person:hover .person__arrow { color: var(--accent); transform: translate(3px, -3px); }
+  .person__lines li::before { content: ''; flex: none; width: 6px; height: 6px; border-radius: 1px; background: var(--lime); transform: translateY(-1px); }
+  .person__counts { margin-top: auto; padding-top: 1.25rem; max-width: 220px; }
 
   .person--compact .person__photo { width: 48px; height: 48px; font-size: .85rem; border-radius: 10px; }
 
-  .person--featured { padding: 1.75rem; gap: 1.75rem; background: linear-gradient(135deg, var(--accent-soft), var(--card) 60%); }
+  .person--featured { padding: 1.75rem; gap: 1.75rem; }
   .person--featured .person__photo { width: 150px; height: 150px; border-radius: 16px; font-size: 2.4rem; }
-  .person--featured h3 { font-size: clamp(1.4rem, 2.2vw, 2rem); }
-  .person--featured .person__counts dd { font-size: 1.6rem; }
+  .person--featured .person__name { font-size: clamp(1.5rem, 2.4vw, 2.2rem); }
+  .person--featured .person__counts dd { font-size: 1.8rem; }
   @media (max-width: 600px) {
     .person--featured { flex-direction: column; }
     .person--featured .person__photo { width: 96px; height: 96px; font-size: 1.6rem; }

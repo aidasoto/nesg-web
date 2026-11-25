@@ -10,13 +10,17 @@ const d = item.data;
 const { slug } = newsSlug(item);
 ---
 
-<a class="card card--frame ncard" href={l(lang, `/news/${slug}/`)} data-kind={d.kind} data-text={`${d.title} ${d.summary}`.toLowerCase()}>
+<a class="card ncard" href={l(lang, `/news/${slug}/`)} data-kind={d.kind} data-text={`${d.title} ${d.summary}`.toLowerCase()}>
   <div class="ncard__top"><span class="kicker kicker--accent">{t(`news.${d.kind}`)}</span><time class="kicker" datetime={d.date.toISOString()}>{formatDate(d.date, lang)}</time></div>
-  <h3>{d.title}</h3>
-  <p class="small muted">{d.summary}</p>
+  <h3 class="card__title ncard__title">{d.title}</h3>
+  <span class="card__bar ncard__bar" aria-hidden="true"></span>
+  <p class="ncard__sum">{d.summary}</p>
 </a>
 
 <style>
   .ncard__top { display: flex; justify-content: space-between; gap: .5rem; }
-  .ncard h3 { margin-top: 1.2rem; }
+  .ncard { padding: 1.6rem; }
+  .ncard__title { margin-top: 1.2rem; font-size: 1.3rem; }
+  .ncard__bar { margin-top: 1.1rem; }
+  .ncard__sum { margin: 1rem 0 0; font: .92rem/1.5 var(--font-body); color: var(--fg); }
 </style>

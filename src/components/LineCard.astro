@@ -1,37 +1,75 @@
 ---
+/**
+ * Tarjeta de línea de investigación (diseño "ficha"):
+ * título grande + índice "/01" en lima, barra lima, descripción y tres cifras
+ * con "+" lima. Las tarjetas comparten filas (subgrid) para alinear entre sí
+ * título, barra, descripción y cifras.
+ */
 import { l, localize } from '@/i18n/utils';
 import type { Lang } from '@/i18n/ui';
 import type { Line } from '@/lib/data';
 
 interface Props { line: Line; lang: Lang; counts?: { pubs: number; projects: number; people: number } }
 const { line, lang, counts } = Astro.props;
-const L = lang === 'es' ? { pubs: 'Publ.', projects: 'Proy.', people: 'Invest.' } : { pubs: 'Pubs', projects: 'Projects', people: 'People' };
+const L = lang === 'es'
+  ? { pubs: 'Publ.', projects: 'Proy.', people: 'Invest.', pubsL: 'Publicaciones', projectsL: 'Proyectos', peopleL: 'Investigadores' }
+  : { pubs: 'Pubs', projects: 'Proj.', people: 'People', pubsL: 'Publications', projectsL: 'Projects', peopleL: 'Researchers' };
+const idx = String(line.data.order).padStart(2, '0');
 ---
 
-<a class="card card--frame lcard" href={l(lang, `/research-lines/${line.id}/`)}>
-  <div class="lcard__top">
-    <span class="lcard__idx">{String(line.data.order).padStart(2, '0')}</span>
-    <svg class="lcard__arrow" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </div>
-  <h3>{localize(line.data.title, lang)}</h3>
-  <p class="small muted">{localize(line.data.short, lang)}</p>
-  {counts && (
-    <dl class="lcard__counts">
-      <div><dt>{L.pubs}</dt><dd>{counts.pubs}</dd></div>
-      <div><dt>{L.projects}</dt><dd>{counts.projects}</dd></div>
-      <div><dt>{L.people}</dt><dd>{counts.people}</dd></div>
-    </dl>
-  )}
+<a class="card lcard" href={l(lang, `/research-lines/${line.id}/`)}>
+    <div class="lcard__head">
+      <h3 class="lcard__title">{localize(line.data.title, lang)}</h3>
+      <span class="lcard__idx" aria-hidden="true">/{idx}</span>
+    </div>
+    <span class="lcard__bar" aria-hidden="true"></span>
+    <p class="lcard__desc">{localize(line.data.short, lang)}</p>
+    {counts && (
+      <dl class="lcard__counts">
+        <div><span class="lcard__plus" aria-hidden="true"></span><dt><abbr title={L.pubsL}>{L.pubs}</abbr></dt><dd>{counts.pubs}</dd></div>
+        <div><span class="lcard__plus" aria-hidden="true"></span><dt><abbr title={L.projectsL}>{L.projects}</abbr></dt><dd>{counts.projects}</dd></div>
+        <div><span class="lcard__plus" aria-hidden="true"></span><dt><abbr title={L.peopleL}>{L.people}</abbr></dt><dd>{counts.people}</dd></div>
+      </dl>
+    )}
 </a>
 
 <style>
-  .lcard { display: flex; flex-direction: column; min-height: 260px; }
-  .lcard__top { display: flex; justify-content: space-between; align-items: center; }
-  .lcard__idx { font: 600 .8rem var(--font-mono); color: var(--accent); letter-spacing: .1em; }
-  .lcard__arrow { color: var(--muted); transition: transform .25s var(--ease), color .25s; }
-  .lcard:hover .lcard__arrow { color: var(--accent); transform: translate(3px, -3px); }
-  .lcard h3 { font-size: 1.3rem; margin-top: 1.5rem; }
-  .lcard__counts { margin: auto 0 0; padding-top: 1rem; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px dashed var(--border); }
-  .lcard__counts dt { font: 500 .6rem var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
-  .lcard__counts dd { margin: .2rem 0 0; font: 600 1.25rem var(--font-display); color: var(--fg-strong); font-variant-numeric: tabular-nums; }
+  /*
+   * Subgrid: cada tarjeta ocupa 4 filas de la rejilla y las comparte con sus
+   * vecinas, así título, barra, descripción y cifras quedan a la misma altura
+   * aunque los títulos tengan distinto número de líneas.
+   * (Sin container-type: la contención de tamaño anula el subgrid.)
+   */
+  .lcard {
+    display: grid; grid-row: span 4; grid-template-rows: subgrid; row-gap: 0;
+    padding: 1.6rem 1.6rem 1.5rem;
+    border-color: transparent; border-radius: var(--radius);
+  }
+  .lcard:hover { border-color: transparent; transform: translateY(-3px); }
+
+  .lcard__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+  .lcard__title { margin: 0; font: 700 1.45rem/1.12 var(--font-display); letter-spacing: -.01em; color: var(--fg-strong); }
+  .lcard__idx { flex-shrink: 0; font: 400 1.45rem/1.12 var(--font-display); color: var(--lime); letter-spacing: -.02em; }
+
+  .lcard__bar {
+    align-self: start; display: block; width: 44px; height: 4px; margin-top: 1.25rem;
+    background: var(--lime); transition: width .35s var(--ease);
+  }
+  .lcard:hover .lcard__bar { width: 88px; }
+
+  .lcard__desc { margin: 1.1rem 0 0; font: 400 .95rem/1.5 var(--font-body); color: var(--fg); }
+
+  .lcard__counts {
+    align-self: end; margin: 0; padding-top: 2rem;
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem;
+  }
+  .lcard__counts > div { min-width: 0; }
+  /* "+" lima dibujado con dos trazos */
+  .lcard__plus { position: relative; display: block; width: 15px; height: 15px; margin-bottom: .8rem; }
+  .lcard__plus::before, .lcard__plus::after { content: ''; position: absolute; background: var(--lime); }
+  .lcard__plus::before { left: 0; right: 0; top: 50%; height: 2.5px; transform: translateY(-50%); }
+  .lcard__plus::after { top: 0; bottom: 0; left: 50%; width: 2.5px; transform: translateX(-50%); }
+  .lcard__counts dt { font: 500 .68rem/1 var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--fg-strong); white-space: nowrap; }
+  .lcard__counts abbr { text-decoration: none; }
+  .lcard__counts dd { margin: .5rem 0 0; font: 700 1.5rem/1 var(--font-display); color: var(--fg-strong); font-variant-numeric: tabular-nums; }
 </style>

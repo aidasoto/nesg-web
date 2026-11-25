@@ -105,8 +105,8 @@ const KIND: Record<string, string> = es
       <div class="section-head"><div><span class="section-head__idx">02</span><h2>{es ? 'Afiliación institucional' : 'Institutional affiliation'}</h2></div></div>
       <div class="aff">
         {institutions.map((p, i) => (
-          <a class="card card--frame aff__card reveal" href={p.data.url} rel="noopener" style={`transition-delay:${i * 90}ms`}>
-            <span class="kicker">0{i + 1}</span>
+          <a class="card card--bar aff__card reveal" href={p.data.url} rel="noopener" style={`transition-delay:${i * 90}ms`}>
+            <span class="card__idx aff__idx" aria-hidden="true">/0{i + 1}</span>
             <div class="aff__logo">{p.data.logo ? <img src={p.data.logo} alt={p.data.name} loading="lazy" /> : <span>{p.data.name}</span>}</div>
             <h3>{p.data.name}</h3>
             {p.data.url && <span class="aff__url">{p.data.url.replace(/^https?:\/\//, '')} ↗</span>}
@@ -124,11 +124,11 @@ const KIND: Record<string, string> = es
         <div class="prose reveal" set:html={md(page.data.facilities)} />
       </div>
       {acyr && (
-        <a class="card card--frame lab reveal" href={l(lang, `/projects/${acyr.id}/`)}>
+        <a class="card card--bar lab reveal" href={l(lang, `/projects/${acyr.id}/`)}>
           <span class="kicker kicker--accent">{acyr.data.code}</span>
           <p class="lab__acr">{acyr.data.acronym}</p>
           <h3>{localize(acyr.data.title, lang)}</h3>
-          <dl class="lab__meta">
+          <dl class="card-stats card-stats--text lab__meta" style="--cols:2">
             <div><dt>{t('projects.funder')}</dt><dd>{acyr.data.funder}</dd></div>
             <div><dt>{t('projects.dates')}</dt><dd>{acyr.data.start.getFullYear()}–{acyr.data.end?.getFullYear()}</dd></div>
           </dl>
@@ -144,7 +144,7 @@ const KIND: Record<string, string> = es
       <div class="section-head"><div><span class="section-head__idx">04</span><h2>{t('about.collab')}</h2></div></div>
       <div class="grid">
         {collaborators.map((p, i) => (
-          <article class="card card--frame reveal" style={`transition-delay:${i * 90}ms`}>
+          <article class="card card--bar reveal" style={`transition-delay:${i * 90}ms`}>
             <span class="kicker">{p.data.kind}</span>
             {p.data.logo && <img class="collab__logo" src={p.data.logo} alt="" loading="lazy" />}
             <h3>{p.data.url ? <a href={p.data.url} rel="noopener">{p.data.name}</a> : p.data.name}</h3>
@@ -169,7 +169,7 @@ const KIND: Record<string, string> = es
       <div class="section-head"><div><span class="section-head__idx">05</span><h2>{t('about.join')}</h2></div></div>
       <div class="grid">
         {vacancies.map((v, i) => (
-          <article class="card card--frame vac reveal" style={`transition-delay:${i * 90}ms`}>
+          <article class="card card--bar vac reveal" style={`transition-delay:${i * 90}ms`}>
             <div class="vac__top"><span class="kicker kicker--accent">{KIND[v.data.kind]}</span><span class="status status--active">{es ? 'Abierta' : 'Open'}</span></div>
             <h3>{localize(v.data.title, lang)}</h3>
             <div class="small muted" set:html={md(localize(v.data.description, lang))} />
@@ -227,14 +227,13 @@ const KIND: Record<string, string> = es
   .aff__logo img { max-height: 96px; max-width: 100%; width: auto; object-fit: contain; }
   .aff__logo span { font: 600 1rem var(--font-display); color: var(--fg-strong); text-align: center; }
   .aff__card h3 { margin: .25rem 0 0; font-size: 1.05rem; }
+  .aff__idx { align-self: flex-end; }
   .aff__url { font: .72rem var(--font-mono); color: var(--accent); }
 
   /* Laboratorio */
   .lab { padding: 2rem; }
-  .lab__acr { font: 600 2.4rem/1 var(--font-display); color: var(--accent); margin: 1rem 0 .5rem; letter-spacing: -.02em; }
-  .lab__meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; padding-top: 1rem; border-top: 1px dashed var(--border); }
-  .lab__meta dt { font: 500 .65rem var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
-  .lab__meta dd { margin: .25rem 0 0; font-size: .9rem; }
+  .lab__acr { font: 700 2.4rem/1 var(--font-display); color: var(--fg-strong); margin: 1rem 0 .5rem; letter-spacing: -.02em; }
+  .lab__meta { margin: 2rem 0 1.5rem; }
   .lab__go { font: 500 .75rem var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--accent); }
 
   .collab__logo { display: block; height: 40px; width: auto; margin: 1rem 0 .25rem; }
@@ -247,7 +246,7 @@ const KIND: Record<string, string> = es
   .vac__top { display: flex; justify-content: space-between; align-items: center; }
   .vac__links { margin-top: auto; display: flex; gap: 1rem; flex-wrap: wrap; font: 500 .75rem var(--font-mono); text-transform: uppercase; letter-spacing: .06em; padding-top: .75rem; }
   .vac__links a { text-decoration: none; }
-  .cta { background: linear-gradient(135deg, var(--accent-soft), var(--card)); border-color: var(--accent); display: flex; flex-direction: column; gap: .5rem; }
+  .cta { display: flex; flex-direction: column; gap: .5rem; }
   .cta h3 { font-size: 1.35rem; }
   .cta__btns { margin-top: auto; display: flex; gap: .5rem; flex-wrap: wrap; padding-top: 1rem; }
 </style>
