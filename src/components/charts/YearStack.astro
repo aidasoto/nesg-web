@@ -8,28 +8,49 @@
  * - Sin ninguno de los dos, la gráfica no reacciona al clic (solo tooltip), para no
  *   sugerir una acción que no existe.
  * - Tabla accesible en <details>.
+ * - Destacados: punto sobre la columna con mensaje propio al pasar el ratón.
+ *   Por defecto, el año récord y el año en curso (datos parciales). `highlights`
+ *   permite añadir o sustituir mensajes por año; `highlights={false}` los quita.
  */
 import type { Lang } from '@/i18n/ui';
 import type { Publication } from '@/lib/data';
 import { TYPE_GROUPS, niceTicks, pubsByYear, roundedTop, tipRow } from '@/lib/charts';
 
-interface Props { pubs: Publication[]; lang: Lang; title: string; filterTarget?: string; link?: string; height?: number }
-const { pubs, lang, title, filterTarget, link, height = 220 } = Astro.props;
+interface Props {
+  pubs: Publication[]; lang: Lang; title: string; filterTarget?: string; link?: string; height?: number;
+  highlights?: Record<number, string> | false;
+}
+const { pubs, lang, title, filterTarget, link, height = 220, highlights = {} } = Astro.props;
 const interactive = !!(filterTarget || link);
 
 const rows = pubsByYear(pubs);
 const max = Math.max(1, ...rows.map((r) => r.total));
 const ticks = niceTicks(max, 3);
 const top = ticks[ticks.length - 1];
-const W = 720, H = height, padL = 28, padB = 26, padT = 10;
+const W = 720, H = height, padL = 28, padB = 26, padT = 24; // margen superior para los destacados
 const plotH = H - padB - padT;
 const step = (W - padL) / Math.max(rows.length, 1);
-const bw = Math.min(28, step * 0.62);
+const bw = Math.min(22, step * 0.56);
 const y = (v: number) => padT + plotH - (v / top) * plotH;
 const GAP = 2; // separación de superficie entre segmentos
 const labelEvery = rows.length > 16 ? 2 : 1;
 const legendTotals = TYPE_GROUPS.map((g) => ({ ...g, n: rows.reduce((s, r) => s + r[g.id], 0) })).filter((g) => g.n > 0);
 const t = (en: string, es: string) => (lang === 'es' ? es : en);
+
+// Destacados automáticos: año récord (el más reciente si hay empate) y año en curso
+const marks: Record<number, string[]> = {};
+if (highlights !== false) {
+  const add = (year: number, html: string) => (marks[year] ??= []).push(html);
+  const thisYear = new Date().getFullYear();
+  const record = rows.reduce((best, r) => (r.total >= best.total ? r : best), rows[0]);
+  if (rows.length > 2 && record?.total > 0)
+    add(record.year, `<b>${t('Record year', 'Año récord')}</b><br>${record.total} ${t('publications', 'publicaciones')}`);
+  const last = rows[rows.length - 1];
+  if (last?.year === thisYear)
+    add(thisYear, `<b>${t('Current year', 'Año en curso')}</b><br>${t('Partial data', 'Datos parciales')}`);
+  for (const [y, html] of Object.entries(highlights)) marks[+y] = [html];
+}
+const hasMarks = Object.keys(marks).length > 0;
 ---
 
 {rows.length > 0 && (
@@ -38,6 +59,7 @@ const t = (en: string, es: string) => (lang === 'es' ? es : en);
     <span class="kicker">{title}</span>
     <ul class="viz__legend">
       {legendTotals.map((g) => <li><i style={`background:${g.color}`}></i>{g.label[lang]} <b>{g.n}</b></li>)}
+      {hasMarks && <li class="yst__legend-hl"><i></i>{t('Highlight', 'Destacado')}</li>}
     </ul>
   </figcaption>
   <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={title}>
@@ -61,12 +83,22 @@ const t = (en: string, es: string) => (lang === 'es' ? es : en);
             const h = Math.max(0, y0 - y1 - (si < segs.length - 1 ? GAP : 0));
             const yTop = si < segs.length - 1 ? y1 + GAP : y1;
             return si === segs.length - 1
-              ? <path d={roundedTop(x, yTop, bw, Math.max(0, y0 - yTop))} fill={g.color} />
-              : <rect x={x} y={yTop} width={bw} height={h} fill={g.color} />;
+              ? <path class="viz-glow" d={roundedTop(x, yTop, bw, Math.max(0, y0 - yTop), 3)} fill={g.color} style={`color:${g.color}`} />
+              : <rect class="viz-glow" x={x} y={yTop} width={bw} height={h} fill={g.color} style={`color:${g.color}`} />;
           })}
           {i % labelEvery === 0 && <text class="viz__xlabel" x={x + bw / 2} y={H - 8} text-anchor="middle">{`'${String(r.year).slice(2)}`}</text>}
           <rect class="yst__hit" x={padL + i * step} y={padT} width={step} height={plotH}
-            data-tip={tip} data-year={r.total ? r.year : undefined} tabindex={interactive && r.total ? 0 : undefined} role={interactive && r.total ? 'button' : undefined} />
+            data-tip={tip + (marks[r.year] ? `<br>${marks[r.year].join('<br>')}` : '')} data-year={r.total ? r.year : undefined} tabindex={interactive && r.total ? 0 : undefined} role={interactive && r.total ? 'button' : undefined} />
+          {marks[r.year] && (() => {
+            const cx = x + bw / 2, top = y(r.total), cy = top - 12;
+            return (
+              <g class="yst__mark">
+                <line class="yst__stem" x1={cx} x2={cx} y1={cy + 4} y2={top - 2} />
+                <circle class="yst__ring" cx={cx} cy={cy} r="4" />
+                <circle class="yst__dot" cx={cx} cy={cy} r="4" data-tip={marks[r.year].join('<br>')} data-year={r.total ? r.year : undefined} />
+              </g>
+            );
+          })()}
         </g>
       );
     })}
@@ -88,6 +120,15 @@ const t = (en: string, es: string) => (lang === 'es' ? es : en);
   :global(.viz.is-in) .yst__col { transform: none; }
   .yst__col { transition: transform .8s var(--ease) calc(var(--i) * 25ms), opacity .3s; }
   .yst__hit { fill: transparent; }
+  /* Destacado: punto con halo y pulso (blanco en oscuro, azul marca en claro) */
+  .yst__dot { fill: var(--viz-hl); filter: drop-shadow(0 0 5px var(--viz-hl-glow)); cursor: help; }
+  .yst--interactive .yst__dot[data-year] { cursor: pointer; }
+  .yst__ring { fill: none; stroke: var(--viz-hl); stroke-width: 1; pointer-events: none; transform-box: fill-box; transform-origin: center; animation: yst-ring 2.2s ease-out infinite; }
+  .yst__stem { stroke: var(--viz-hl); stroke-width: 1; stroke-dasharray: 2 2; opacity: .55; pointer-events: none; }
+  @keyframes yst-ring { from { transform: scale(1); opacity: .7; } to { transform: scale(2.6); opacity: 0; } }
+  .yst__legend-hl i { background: var(--viz-hl); border-radius: 50% !important; box-shadow: 0 0 6px var(--viz-hl-glow); }
+  /* Columna bajo el cursor: el resto se atenúa (lectura tipo escáner) */
+  .yst svg:has(.yst__hit:hover, .yst__dot:hover) .yst__col:not(:has(.yst__hit:hover, .yst__dot:hover)) { opacity: .45; }
   /* Solo las gráficas con acción muestran resaltado y cursor de clic */
   .yst--interactive .yst__hit[data-year] { cursor: pointer; }
   .yst--interactive .yst__hit[data-year]:hover, .yst--interactive .yst__hit[data-year]:focus-visible { fill: var(--accent-soft); outline: none; }

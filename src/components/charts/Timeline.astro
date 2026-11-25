@@ -47,7 +47,7 @@ const types = [...new Set(items.map((p) => p.data.type))];
             <a href={l(lang, `/projects/${p.id}/`)} data-tip={tip}>
               <span class="tl__name">{name}</span>
               <span class="tl__lane">
-                <span class="tl__bar" style={`left:${pct(d.start)}%;width:${Math.max(0.8, pct(end) - pct(d.start))}%;background:${COLORS[d.type]};--i:${i}`}></span>
+                <span class="tl__bar" style={`left:${pct(d.start)}%;width:${Math.max(0.8, pct(end) - pct(d.start))}%;background:${COLORS[d.type]};color:${COLORS[d.type]};--i:${i}`}></span>
               </span>
             </a>
           </li>
@@ -62,14 +62,25 @@ const types = [...new Set(items.map((p) => p.data.type))];
   .tl__body { position: relative; --name-w: clamp(90px, 28%, 260px); }
   .tl__axis { position: relative; height: 1.4rem; margin-left: var(--name-w); border-bottom: 1px solid var(--border); }
   .tl__axis span { position: absolute; transform: translateX(-50%); font: 10px var(--font-mono); color: var(--muted); }
-  .tl__now { position: absolute; top: 0; height: calc(100% + var(--rows-h, 100vh)); border-left: 1px dashed var(--accent); pointer-events: none; z-index: 1; }
+  .tl__now { position: absolute; top: 0; height: calc(100% + var(--rows-h, 100vh)); border-left: 1px solid var(--accent); box-shadow: 0 0 8px color-mix(in srgb, var(--accent) calc(var(--viz-glow) * 100%), transparent); pointer-events: none; z-index: 1; }
   .tl__now em { position: absolute; top: -1.1rem; left: 4px; font: 600 9px var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--accent); font-style: normal; }
   .tl__body { overflow: hidden; }
   .tl__rows li a { display: grid; grid-template-columns: var(--name-w) 1fr; align-items: center; min-height: 30px; text-decoration: none; color: var(--fg); border-bottom: 1px dashed var(--border); }
   .tl__rows li a:hover { background: var(--accent-soft); }
   .tl__rows li.is-current a { background: var(--accent-soft); font-weight: 600; }
   .tl__name { font: .75rem var(--font-mono); padding-right: .75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .tl__lane { position: relative; height: 10px; }
-  .tl__bar { position: absolute; top: 0; height: 100%; border-radius: 4px; transform-origin: left; transform: scaleX(0); transition: transform .9s var(--ease) calc(var(--i) * 50ms); }
+  .tl__lane { position: relative; height: 8px; }
+  .tl__bar {
+    position: absolute; top: 0; height: 100%; border-radius: 1px;
+    /* inicio marcado con un remate claro */
+    box-shadow: inset 2px 0 0 color-mix(in srgb, currentColor 40%, #fff), 0 0 6px color-mix(in srgb, currentColor calc(var(--viz-glow) * 100%), transparent);
+    transform-origin: left; transform: scaleX(0); transition: transform .9s var(--ease) calc(var(--i) * 50ms);
+  }
+  /* Proyectos en curso: extremo con un pulso "en directo" */
+  .tl__rows li[data-status='active'] .tl__bar::after {
+    content: ''; position: absolute; right: -3px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%;
+    background: currentColor; box-shadow: 0 0 0 0 currentColor; animation: tl-pulse 2s ease-out infinite;
+  }
+  @keyframes tl-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 70%, transparent); } 100% { box-shadow: 0 0 0 7px transparent; } }
   :global(.viz.is-in) .tl__bar { transform: none; }
 </style>

@@ -9,11 +9,11 @@ import type { Publication } from '@/lib/data';
 export type TypeGroup = 'journal' | 'conference' | 'book' | 'other';
 
 /** 8 tipos → 4 grupos (máximo de series categóricas validadas). */
-export const TYPE_GROUPS: { id: TypeGroup; color: string; label: Record<Lang, string> }[] = [
-  { id: 'journal', color: 'var(--s1)', label: { en: 'Journal articles', es: 'Artículos de revista' } },
-  { id: 'conference', color: 'var(--s2)', label: { en: 'Conference papers', es: 'Congresos' } },
-  { id: 'book', color: 'var(--s3)', label: { en: 'Books & chapters', es: 'Libros y capítulos' } },
-  { id: 'other', color: 'var(--s4)', label: { en: 'Other', es: 'Otros' } },
+export const TYPE_GROUPS: { id: TypeGroup; color: string; tag: string; tagEdge: string; label: Record<Lang, string> }[] = [
+  { id: 'journal', color: 'var(--s1)', tag: 'var(--tag-1)', tagEdge: 'var(--tag-1-edge)', label: { en: 'Journal articles', es: 'Artículos de revista' } },
+  { id: 'conference', color: 'var(--s2)', tag: 'var(--tag-2)', tagEdge: 'var(--tag-2-edge)', label: { en: 'Conference papers', es: 'Congresos' } },
+  { id: 'book', color: 'var(--s3)', tag: 'var(--tag-3)', tagEdge: 'var(--tag-3-edge)', label: { en: 'Books & chapters', es: 'Libros y capítulos' } },
+  { id: 'other', color: 'var(--s4)', tag: 'var(--tag-4)', tagEdge: 'var(--tag-4-edge)', label: { en: 'Other', es: 'Otros' } },
 ];
 
 export function typeGroup(t: Publication['data']['type']): TypeGroup {

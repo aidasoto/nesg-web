@@ -35,7 +35,7 @@ const labels = Object.fromEntries(TYPE_GROUPS.map((g) => [g.id, g.label[lang]]))
     {TYPE_GROUPS.map((g, i) => {
       const extra = g.id === 'book' && books && chapters ? ` (${chapters} ${t('chapters', 'capítulos')} · ${books} ${t('books', 'libros')})` : '';
       return (
-        <span data-group={g.id} hidden={totals[g.id] === 0} style={`flex-grow:${totals[g.id]};background:${g.color};--i:${i}`}
+        <span data-group={g.id} hidden={totals[g.id] === 0} style={`flex-grow:${totals[g.id]};background:${g.color};color:${g.color};--i:${i}`}
           data-tip={`<i style="background:${g.color}"></i>${g.label[lang]}: <b>${totals[g.id]}</b> · ${((totals[g.id] / n) * 100).toFixed(0)}%${extra}`}></span>
       );
     })}
@@ -55,14 +55,22 @@ const labels = Object.fromEntries(TYPE_GROUPS.map((g) => [g.id, g.label[lang]]))
 )}
 
 <style>
-  .comp__bar { display: flex; gap: 2px; height: 18px; border-radius: 5px; overflow: hidden; }
-  .comp__bar span { flex-basis: 0; min-width: 3px; transform-origin: left; transform: scaleX(0); transition: transform .8s var(--ease) calc(var(--i) * 80ms), flex-grow .5s var(--ease); }
+  /* Barra 100 % troceada en celdas tipo LED; cada tipo separado por un hueco mayor */
+  .comp__bar { display: flex; gap: 4px; height: 16px; padding: 3px; border: 1px solid var(--border); border-radius: 2px; }
+  .comp__bar span {
+    flex-basis: 0; min-width: 3px; border-radius: 1px;
+    -webkit-mask: repeating-linear-gradient(90deg, #000 0 4px, transparent 4px 6px); mask: repeating-linear-gradient(90deg, #000 0 4px, transparent 4px 6px);
+    filter: drop-shadow(0 0 4px color-mix(in srgb, currentColor calc(var(--viz-glow) * 100%), transparent));
+    transform-origin: left; transform: scaleX(0); transition: transform .8s var(--ease) calc(var(--i) * 80ms), flex-grow .5s var(--ease);
+  }
   :global(.viz.is-in) .comp__bar span { transform: none; }
   .comp__legend { margin-top: 1rem; display: grid; gap: .45rem; font-size: .85rem; }
+  .comp__legend li { padding-bottom: .4rem; border-bottom: 1px dashed color-mix(in srgb, var(--border) 60%, transparent); }
+  .comp__legend li:last-child { border-bottom: 0; padding-bottom: 0; }
   .comp__legend li { display: grid; grid-template-columns: 12px 1fr auto 3.2rem; gap: .6rem; align-items: center; transition: opacity .3s; }
   .comp__legend li.is-zero { opacity: .35; }
-  .comp__legend i { width: 10px; height: 10px; border-radius: 3px; }
-  .comp__legend b { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .comp__legend i { width: 8px; height: 8px; border-radius: 1px; }
+  .comp__legend b { font: 600 .8rem var(--font-mono); font-variant-numeric: tabular-nums; }
   .comp__legend [data-pct] { text-align: right; font: .75rem var(--font-mono); }
   .comp__scope [data-comp-year]:not(:empty) { color: var(--accent); margin-right: .5rem; }
   .comp__hint { margin: 1.25rem 0 0; padding-top: .9rem; border-top: 1px dashed var(--border); }

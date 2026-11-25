@@ -16,7 +16,7 @@ const max = Math.max(1, ...rows.map((r) => r.value));
         <li>
           <Tag class="bl__row" href={r.href} data-tip={`<b>${r.label}</b>: ${r.value} ${unit}${r.note ? `<br>${r.note}` : ''}`}>
             <span class="bl__label">{r.label}</span>
-            <span class="bl__track"><span class="bl__bar" style={`width:${(r.value / max) * 100}%;background:${color};--i:${i}`}></span></span>
+            <span class="bl__track"><span class="bl__bar" style={`width:${(r.value / max) * 100}%;background:${color};color:${color};--i:${i}`}></span></span>
             <span class="bl__val">{r.value}</span>
           </Tag>
         </li>
@@ -31,8 +31,16 @@ const max = Math.max(1, ...rows.map((r) => r.value));
   .bl__row { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr) 2.5rem; gap: .75rem; align-items: center; color: var(--fg); text-decoration: none; font-size: .85rem; padding: .15rem 0; }
   a.bl__row:hover .bl__label { color: var(--accent); }
   .bl__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bl__track { height: 10px; }
-  .bl__bar { display: block; height: 100%; border-radius: 0 4px 4px 0; transform-origin: left; transform: scaleX(0); transition: transform .8s var(--ease) calc(var(--i) * 60ms); }
+  /* Pista con marcas cada 4 px y barra troceada en segmentos tipo LED */
+  .bl__track { position: relative; height: 10px; background: repeating-linear-gradient(90deg, var(--border) 0 1px, transparent 1px 4px); background-size: 100% 2px; background-position: 0 50%; background-repeat: repeat-x; }
+  .bl__bar {
+    display: block; height: 100%; border-radius: 1px;
+    -webkit-mask: repeating-linear-gradient(90deg, #000 0 3px, transparent 3px 4px); mask: repeating-linear-gradient(90deg, #000 0 3px, transparent 3px 4px);
+    filter: drop-shadow(0 0 4px color-mix(in srgb, currentColor calc(var(--viz-glow) * 100%), transparent));
+    transform-origin: left; transform: scaleX(0); transition: transform .8s var(--ease) calc(var(--i) * 60ms), filter .2s;
+  }
   :global(.viz.is-in) .bl__bar { transform: none; }
+  a.bl__row:hover .bl__bar { filter: brightness(1.2) drop-shadow(0 0 6px color-mix(in srgb, currentColor 60%, transparent)); }
   .bl__val { text-align: right; font: 600 .8rem var(--font-mono); font-variant-numeric: tabular-nums; }
+  .bl__label { font-size: .82rem; }
 </style>
