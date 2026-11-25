@@ -49,6 +49,11 @@ const jsonLd = {
   <section class="hero" data-hero aria-labelledby="hero-title">
     <DataField />
     <div class="hero__veil" aria-hidden="true"></div>
+    <!-- Cifras clave a la derecha, a media altura del titular -->
+    <dl class="hero__figures">
+      <div><dt>{t('home.stats.publications')}</dt><dd>{figures.publications}</dd></div>
+      <div><dt>{t('home.stats.projects')}</dt><dd>{figures.activeProjects}</dd></div>
+    </dl>
     <div class="container hero__content">
       <p class="kicker kicker--accent">// NESG · {t('site.fullName')}</p>
       <h1 id="hero-title">{t('home.h1')}</h1>
@@ -68,8 +73,6 @@ const jsonLd = {
       </a>
       <dl class="hero__feed">
         <div><dt>{t('home.feed')}</dt><dd><span class="status status--active">OpenAlex</span></dd></div>
-        <div><dt>{t('home.stats.publications')}</dt><dd>{figures.publications}</dd></div>
-        <div><dt>{t('home.stats.projects')}</dt><dd>{figures.activeProjects}</dd></div>
         <div><dt>{t('home.sync')}</dt><dd>{formatDate(stats.generatedAt, lang, { dateStyle: 'short' })}</dd></div>
         <div class="hero__geo"><dt>ETSIIT</dt><dd>{site.geo.lat.toFixed(4)}°N {Math.abs(site.geo.lon).toFixed(4)}°W</dd></div>
       </dl>
@@ -209,12 +212,23 @@ const jsonLd = {
   .hero__feed div { display: flex; gap: .6rem; justify-content: space-between; }
   .hero__feed dt { color: var(--muted); }
   .hero__feed dd { margin: 0; color: var(--fg-strong); font-variant-numeric: tabular-nums; }
+  /* Cifras clave: apiladas a la derecha, centradas en vertical en la zona del titular */
+  .hero__figures {
+    position: absolute; z-index: 2; right: var(--gutter); margin: 0;
+    top: calc(50% + (var(--header-h) - 7rem) / 2); transform: translateY(-50%); /* mismo centro que .hero__content */
+    display: grid; gap: .55rem; min-width: 13rem; font: .68rem/1.3 var(--font-mono); text-transform: uppercase; letter-spacing: .08em;
+    opacity: calc(1 - var(--p) * 2);
+  }
+  .hero__figures div { display: flex; justify-content: space-between; gap: 1.5rem; }
+  .hero__figures div + div { padding-top: .55rem; border-top: 1px dashed var(--border); }
+  .hero__figures dt { color: var(--muted); }
+  .hero__figures dd { margin: 0; color: var(--fg-strong); font-variant-numeric: tabular-nums; }
   .hero__geo { grid-column: 1 / -1; border-top: 1px dashed var(--border); padding-top: .3rem; }
   .hero__scroll { position: absolute; left: 50%; bottom: 6.5rem; transform: translateX(-50%); opacity: calc(.7 - var(--p) * 3); animation: bob 2.4s infinite; }
   @keyframes bob { 50% { transform: translate(-50%, 6px); } }
   @media (max-width: 760px) {
     .hero__bar { grid-template-columns: 1fr auto; }
-    .hero__feed { display: none; }
+    .hero__feed, .hero__figures { display: none; }
     .hero__ugr { justify-self: end; }
     .hero__scroll { display: none; }
   }

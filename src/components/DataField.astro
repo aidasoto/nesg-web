@@ -2,7 +2,7 @@
 /**
  * Fondo animado del hero: malla de puntos que simula tráfico de datos.
  * - Ondas de intensidad + barrido tipo radar.
- * - "Paquetes" que recorren filas dejando estela y generan pulsos al llegar a un nodo.
+ * - "Paquetes" que recorren filas dejando estela.
  * - El cursor actúa como lente; el scroll (--p del hero) dispersa la malla.
  * Respeta prefers-reduced-motion (un solo fotograma) y se pausa fuera de pantalla.
  */
@@ -16,7 +16,6 @@
 
 <script>
   type Packet = { row: number; x: number; speed: number; dir: 1 | -1 };
-  type Pulse = { x: number; y: number; r: number; a: number };
 
   const canvas = document.querySelector<HTMLCanvasElement>('[data-datafield]');
   if (canvas) {
@@ -26,9 +25,8 @@
     const ZOOM_DESKTOP = 1, ZOOM_MOBILE = 1; // 1 = tamaño original
     let Z = ZOOM_DESKTOP, GAP = 22 * Z;
     let w = 0, h = 0, cols = 0, rows = 0, dpr = 1;
-    let accent = '#3cc4b4', base = '#e6ecea', light = false;
+    let accent = '#6db8cf', base = '#dfdfdf', light = false;
     let packets: Packet[] = [];
-    const pulses: Pulse[] = [];
     const mouse = { x: -9999, y: -9999 };
     let running = true, raf = 0, t0 = performance.now(), last = performance.now(), parked = false;
 
@@ -106,18 +104,7 @@
           const s = (2.6 - k * 0.2) * Z;
           ctx.fillRect(x - s / 2, y - s / 2, s, s);
         }
-        if (Math.random() < 0.004) pulses.push({ x: Math.round(pk.x / GAP) * GAP, y, r: 2 * Z, a: 0.8 });
         if ((pk.dir === 1 && pk.x > w + 200) || (pk.dir === -1 && pk.x < -200)) Object.assign(pk, newPacket());
-      }
-
-      // pulsos de "evento"
-      for (let k = pulses.length - 1; k >= 0; k--) {
-        const pu = pulses[k];
-        pu.r += 40 * Z * dt; pu.a -= 0.6 * dt;
-        if (pu.a <= 0) { pulses.splice(k, 1); continue; }
-        ctx.strokeStyle = hexA(accent, pu.a * (1 - p));
-        ctx.lineWidth = Math.max(1, Z * 0.7);
-        ctx.strokeRect(pu.x - pu.r, pu.y - pu.r, pu.r * 2, pu.r * 2);
       }
 
       if (running && !reduce) raf = requestAnimationFrame(frame);
