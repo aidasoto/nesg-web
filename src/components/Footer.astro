@@ -2,6 +2,7 @@
 import { l, useTranslations } from '@/i18n/utils';
 import type { Lang } from '@/i18n/ui';
 import { site } from '@/config/site';
+import ThemeToggle from '@/components/ThemeToggle.astro';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -17,8 +18,12 @@ const cols = [
 <footer class="ftr surface-dark">
   <div class="container ftr__grid">
     <div class="ftr__brand">
-      <p class="ftr__logo">NESG</p>
-      <p class="muted small">{t('site.fullName')}<br />Universidad de Granada</p>
+      <a class="ftr__logo" href={l(lang)} aria-label={`${t('site.name')} – ${t('site.fullName')}`}>
+        <span class="ftr__mark" aria-hidden="true"></span>
+      </a>
+      <a class="ftr__ugr" href="https://www.ugr.es" rel="noopener" aria-label="Universidad de Granada">
+        <img src="/assets/logos/ugr.svg" alt="Universidad de Granada" width="818" height="237" loading="lazy" />
+      </a>
     </div>
     <nav aria-label="Footer">
       <p class="kicker">Index</p>
@@ -33,15 +38,29 @@ const cols = [
   </div>
   <div class="container ftr__bottom">
     <span>© {new Date().getFullYear()} NESG · UGR</span>
+    <ThemeToggle lang={lang} />
     <span><a href={l(lang, '/legal/')}>{t('footer.legal')}</a> · <a href={l(lang, '/privacy/')}>{t('footer.privacy')}</a></span>
   </div>
 </footer>
 
 <style>
-  .ftr { position: relative; z-index: 2; background: #050708; color: #e6ecea; border-top: 1px solid #1c2427; padding: 4rem 0 1.5rem; }
+  .ftr { position: relative; z-index: 2; background: #021c27; color: #dfdfdf; border-top: 1px solid #0f3d4f; padding: 4rem 0 1.5rem; }
   :global(:root[data-theme='light']) .ftr { background: var(--bg-alt); color: var(--fg); border-color: var(--border); }
   .ftr__grid { display: grid; gap: 2.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); }
-  .ftr__logo { font: 700 2.4rem/1 var(--font-display); letter-spacing: .12em; margin: 0 0 .75rem; }
+  .ftr__brand { display: flex; flex-direction: column; align-items: flex-start; gap: 1.75rem; height: 100%; }
+  /* Logo NESG como máscara: toma el color del texto del pie (claro sobre oscuro, oscuro en tema claro) */
+  .ftr__logo { display: block; color: inherit; }
+  .ftr__mark {
+    display: block; height: 52px; aspect-ratio: 452 / 121; background: currentColor; transition: background-color .2s;
+    -webkit-mask: url('/assets/logos/nesg_logo.png') center / contain no-repeat; mask: url('/assets/logos/nesg_logo.png') center / contain no-repeat;
+  }
+  .ftr__logo:hover .ftr__mark { background: var(--accent); }
+  /* Logo UGR: en negativo sobre el pie oscuro, a color en tema claro */
+  /* UGR pegado abajo de la columna, alineado con el final de las demás columnas */
+  .ftr__ugr { display: block; margin-top: auto; opacity: .85; transition: opacity .2s; }
+  .ftr__ugr:hover { opacity: 1; }
+  .ftr__ugr img { display: block; height: 44px; width: auto; filter: brightness(0) invert(1); }
+  :global(:root[data-theme='light']) .ftr__ugr img { filter: none; }
   .ftr__links { display: grid; gap: .4rem; margin-top: .75rem; }
   .ftr__links a, .ftr__bottom a { color: inherit; text-decoration: none; opacity: .8; }
   .ftr__links a:hover, .ftr__bottom a:hover { color: var(--accent); opacity: 1; }
@@ -49,5 +68,5 @@ const cols = [
   .ftr__geo { margin-top: 1rem; }
   .ftr__gh { display: inline-flex; align-items: center; gap: .5rem; color: inherit; text-decoration: none; }
   .ftr__gh:hover { color: var(--accent); }
-  .ftr__bottom { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--border); font: .72rem var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .ftr__bottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--border); font: .72rem var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
 </style>

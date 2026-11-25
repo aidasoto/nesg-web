@@ -1,1 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#3b3bd6"/><text x="16" y="21" font-family="monospace" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">NESG</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-6 -6 132 132">
+  <!-- Icono del logo NESG (la "N"), redibujado a partir de public/assets/logos/nesg_logo.png -->
+  <style>
+    path { fill: #042f40; }
+    @media (prefers-color-scheme: dark) { path { fill: #dfdfdf; } }
+  </style>
+  <path d="M0 47H36V120H0Z" />
+  <path d="M36 20H66L119 91.5V120H90L36 47Z" />
+  <path d="M86 0H119V67L86 23Z" />
+</svg>

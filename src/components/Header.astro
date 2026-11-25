@@ -65,12 +65,8 @@ const other = langs.find((x) => x !== lang)!;
     </nav>
 
     <a href={l(lang)} class="hdr__logo" aria-label={`${t('site.name')} – ${t('site.fullName')}`}>
-      <!-- TODO: logo SVG oficial del NESG -->
-      <svg viewBox="0 0 28 28" width="28" height="28" aria-hidden="true">
-        <rect x="1" y="1" width="26" height="26" rx="7" fill="none" stroke="currentColor" stroke-width="1.5" />
-        <path d="M8 19V9l12 10V9" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-      </svg>
-      <span>NESG</span>
+      <!-- Logo oficial (public/assets/logos/nesg_logo.png) aplicado como máscara: toma el color del texto de la cabecera -->
+      <span class="hdr__mark" aria-hidden="true"></span>
     </a>
 
     <div class="hdr__right">
@@ -113,35 +109,41 @@ const other = langs.find((x) => x !== lang)!;
 
 <style>
   .hdr {
-    --hdr-fg: #e6ecea;
+    --hdr-fg: #dfdfdf;
     position: sticky; top: 0; z-index: 50;
     height: var(--header-h);
-    background: #050708;
+    background: #021c27;
     color: var(--hdr-fg);
-    border-bottom: 1px solid #1c2427;
+    border-bottom: 1px solid #0f3d4f;
     transition: background .35s, border-color .35s, backdrop-filter .35s;
   }
   /* Home: flota sobre el hero y se oscurece al bajar */
   .hdr--overlay { position: fixed; left: 0; right: 0; background: transparent; border-color: transparent; }
-  .hdr--overlay.is-scrolled { background: rgba(5, 7, 8, .92); backdrop-filter: blur(10px); border-color: #1c2427; }
-  :global(:root[data-theme='light']) .hdr--overlay:not(.is-scrolled) { --hdr-fg: #111816; }
+  .hdr--overlay.is-scrolled { background: rgba(2, 28, 39, .92); backdrop-filter: blur(10px); border-color: #0f3d4f; }
+  :global(:root[data-theme='light']) .hdr--overlay:not(.is-scrolled) { --hdr-fg: #042f40; }
   .hdr-sentinel { position: absolute; top: 0; height: 40vh; width: 1px; pointer-events: none; }
 
   .hdr__inner { height: 100%; max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; }
   .hdr__logo { display: inline-flex; align-items: center; gap: .6rem; color: var(--hdr-fg); text-decoration: none; font: 700 1.15rem/1 var(--font-display); letter-spacing: .14em; }
+  .hdr__mark {
+    display: block; height: 34px; aspect-ratio: 161 / 46; background: currentColor;
+    -webkit-mask: url('/assets/logos/nesg_logo.png') center / contain no-repeat; mask: url('/assets/logos/nesg_logo.png') center / contain no-repeat;
+    transition: background-color .2s;
+  }
+  .hdr__logo:hover .hdr__mark { background: var(--accent); }
   .hdr__nav ul { list-style: none; margin: 0; padding: 0; display: flex; gap: .25rem; }
   .hdr__nav a { display: block; padding: .55rem .75rem; color: var(--hdr-fg); text-decoration: none; font: 500 .74rem/1 var(--font-mono); text-transform: uppercase; letter-spacing: .1em; opacity: .82; border-radius: 6px; white-space: nowrap; }
-  .hdr__nav a:hover, .hdr__nav a[aria-current='page'] { opacity: 1; color: #3cc4b4; }
+  .hdr__nav a:hover, .hdr__nav a[aria-current='page'] { opacity: 1; color: #6db8cf; }
   .hdr__nav--left { justify-self: start; }
   .hdr__right { justify-self: end; display: flex; align-items: center; gap: 1.25rem; }
   .has-sub { position: relative; }
-  .sub { display: none !important; position: absolute; top: 100%; left: 0; min-width: 240px; flex-direction: column; background: #0b0f11; border: 1px solid #253034; border-radius: 10px; padding: .4rem !important; box-shadow: 0 12px 32px rgba(0,0,0,.4); }
-  .sub a { color: #e6ecea; padding: .7rem .8rem; }
+  .sub { display: none !important; position: absolute; top: 100%; left: 0; min-width: 240px; flex-direction: column; background: #032634; border: 1px solid #1a4b5e; border-radius: 10px; padding: .4rem !important; box-shadow: 0 12px 32px rgba(0,0,0,.4); }
+  .sub a { color: #dfdfdf; padding: .7rem .8rem; }
   .has-sub:hover .sub, .has-sub:focus-within .sub { display: flex !important; }
 
   .hdr__tools { display: flex; align-items: center; gap: .9rem; }
   .hdr__tools a { color: var(--hdr-fg); text-decoration: none; display: inline-flex; opacity: .82; }
-  .hdr__tools a:hover { opacity: 1; color: #3cc4b4; }
+  .hdr__tools a:hover { opacity: 1; color: #6db8cf; }
   .hdr__lang { font: 600 .72rem/1 var(--font-mono); letter-spacing: .1em; border: 1px solid currentColor; border-radius: 6px; padding: .35rem .45rem; }
 
   .hdr__burger { display: none; background: none; border: 0; padding: .5rem; cursor: pointer; flex-direction: column; gap: 6px; }
@@ -149,12 +151,12 @@ const other = langs.find((x) => x !== lang)!;
   .hdr__burger[aria-expanded='true'] span:first-child { transform: translateY(3.75px) rotate(45deg); }
   .hdr__burger[aria-expanded='true'] span:last-child { transform: translateY(-3.75px) rotate(-45deg); }
 
-  .mnav { position: fixed; inset: var(--header-h) 0 0 0; background: #050708; overflow: auto; padding: 1.5rem var(--gutter) 3rem; }
+  .mnav { position: fixed; inset: var(--header-h) 0 0 0; background: #021c27; overflow: auto; padding: 1.5rem var(--gutter) 3rem; }
   .mnav ul { list-style: none; margin: 0; padding: 0; }
-  .mnav > ul > li { border-bottom: 1px solid #1c2427; padding: .9rem 0; }
+  .mnav > ul > li { border-bottom: 1px solid #0f3d4f; padding: .9rem 0; }
   .mnav > ul > li > a { font: 600 1.5rem/1.2 var(--font-display); color: #fff; text-decoration: none; }
   .mnav ul ul { margin-top: .4rem; }
-  .mnav ul ul a { display: block; padding: .35rem 0; color: #8d9a97; text-decoration: none; font: .8rem var(--font-mono); text-transform: uppercase; letter-spacing: .08em; }
+  .mnav ul ul a { display: block; padding: .35rem 0; color: #abc3cb; text-decoration: none; font: .8rem var(--font-mono); text-transform: uppercase; letter-spacing: .08em; }
 
   @media (max-width: 1180px) {
     .hdr__nav { display: none; }

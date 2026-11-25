@@ -1,5 +1,6 @@
 ---
-/** Interruptor claro / oscuro. Guarda la preferencia (localStorage) para toda la web. */
+/** Interruptor claro / oscuro. Guarda la preferencia (localStorage) para toda la web.
+ *  Puede haber varios en la misma página: se mantienen sincronizados. */
 interface Props { lang: 'en' | 'es' }
 const { lang } = Astro.props;
 const labels = lang === 'es' ? ['Modo claro', 'Modo oscuro'] : ['Light mode', 'Dark mode'];
@@ -31,8 +32,9 @@ const labels = lang === 'es' ? ['Modo claro', 'Modo oscuro'] : ['Light mode', 'D
       const light = root.dataset.theme !== 'light';
       if (light) root.dataset.theme = 'light'; else delete root.dataset.theme;
       try { localStorage.setItem('nesg-theme', light ? 'light' : 'dark'); } catch (e) {}
-      sync();
       window.dispatchEvent(new CustomEvent('themechange'));
     });
+    // Si hay varios interruptores en la página (hero y pie), todos reflejan el tema actual
+    window.addEventListener('themechange', sync);
   });
 </script>
