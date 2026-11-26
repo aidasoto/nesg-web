@@ -4,7 +4,7 @@
  * Sticky con fondo negro. En la Home (overlay) es transparente sobre el hero
  * y se vuelve negro al hacer scroll.
  */
-import { l, languages, langs, switchLang, useTranslations } from '@/i18n/utils';
+import { asset, l, languages, langs, switchLang, useTranslations } from '@/i18n/utils';
 import type { Lang } from '@/i18n/ui';
 
 interface Props { lang: Lang; overlay?: boolean }
@@ -66,7 +66,7 @@ const other = langs.find((x) => x !== lang)!;
 
     <a href={l(lang)} class="hdr__logo" aria-label={`${t('site.name')} – ${t('site.fullName')}`}>
       <!-- Logo oficial (public/assets/logos/nesg_logo.png) aplicado como máscara: toma el color del texto de la cabecera -->
-      <span class="hdr__mark" aria-hidden="true"></span>
+      <span class="hdr__mark" aria-hidden="true" style={`--logo:url(${asset('/assets/logos/nesg_logo.png')})`}></span>
     </a>
 
     <div class="hdr__right">
@@ -127,7 +127,7 @@ const other = langs.find((x) => x !== lang)!;
   .hdr__logo { display: inline-flex; align-items: center; gap: .6rem; color: var(--hdr-fg); text-decoration: none; font: 700 1.15rem/1 var(--font-display); letter-spacing: .14em; }
   .hdr__mark {
     display: block; height: 34px; aspect-ratio: 161 / 46; background: currentColor;
-    -webkit-mask: url('/assets/logos/nesg_logo.png') center / contain no-repeat; mask: url('/assets/logos/nesg_logo.png') center / contain no-repeat;
+    -webkit-mask: var(--logo) center / contain no-repeat; mask: var(--logo) center / contain no-repeat;
     transition: background-color .2s;
   }
   .hdr__logo:hover .hdr__mark { background: var(--accent); }

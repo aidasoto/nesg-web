@@ -21,19 +21,28 @@ export function md(text: string | undefined): string {
   return text ? (marked.parse(text, { async: false }) as string) : '';
 }
 
-/** Ruta interna localizada: l('es', '/team/') → '/es/team/' */
+/** Prefijo de despliegue (config `base`) sin barra final: '' en raíz, '/nesg-web' en GitHub Pages. */
+export const BASE = import.meta.env.BASE_URL.replace(/\/+$/, '');
+
+/** Ruta de un fichero de /public con el prefijo de despliegue: asset('/favicon.svg'). Deja intactas las URLs externas. */
+export function asset(path: string): string {
+  return /^[a-z]+:|^\/\//i.test(path) ? path : `${BASE}/${path}`.replace(/\/+/g, '/');
+}
+
+/** Ruta interna localizada: l('es', '/team/') → '/es/team/' (con el prefijo de despliegue). */
 export function l(lang: Lang, path = '/'): string {
   const i = path.search(/[#?]/);
   const [p, suffix] = i === -1 ? [path, ''] : [path.slice(0, i), path.slice(i)];
-  return `/${lang}/${p}/`.replace(/\/+/g, '/') + suffix;
+  return `${BASE}/${lang}/${p}/`.replace(/\/+/g, '/') + suffix;
 }
 
-/** Misma página en otro idioma (para el selector y hreflang). */
+/** Misma página en otro idioma (para el selector y hreflang). Acepta rutas con o sin prefijo. */
 export function switchLang(pathname: string, to: Lang): string {
-  const parts = pathname.split('/');
+  const rel = BASE && pathname.startsWith(BASE + '/') ? pathname.slice(BASE.length) : pathname;
+  const parts = rel.split('/');
   if (langs.includes(parts[1] as Lang)) parts[1] = to;
   else parts.splice(1, 0, to);
-  return parts.join('/');
+  return BASE + parts.join('/');
 }
 
 export function formatDate(d: Date | string, lang: Lang, opts: Intl.DateTimeFormatOptions = { dateStyle: 'medium' }) {

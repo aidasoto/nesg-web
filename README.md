@@ -22,6 +22,25 @@ pnpm build            # astro build + índice Pagefind → dist/
 pnpm check            # tipos
 ```
 
+## Despliegue en GitHub Pages
+
+El workflow [.github/workflows/deploy.yml](.github/workflows/deploy.yml) compila y publica en cada push a `main`
+(o a mano desde *Actions → Deploy to GitHub Pages → Run workflow*).
+
+1. En el repo: *Settings → Pages → Build and deployment → Source:* **GitHub Actions**.
+2. Haz push a `main`. La web queda en `https://<usuario>.github.io/nesg-web/`.
+
+El prefijo `/nesg-web` se pasa al build con `SITE` y `BASE_PATH` (los da `actions/configure-pages`).
+Por eso las rutas internas se generan siempre con los helpers de [src/i18n/utils.ts](src/i18n/utils.ts):
+`l(lang, '/ruta/')` para páginas y `asset('/assets/…')` para ficheros de `public/` (nunca `href="/…"` a mano).
+Si se configura un dominio propio en Pages, el prefijo pasa a ser vacío sin tocar nada más.
+
+Probar en local como en Pages:
+
+```sh
+SITE=https://<usuario>.github.io BASE_PATH=/nesg-web pnpm build && pnpm preview
+```
+
 ## Mapa del sitio → ficheros
 
 Todo cuelga de `src/pages/[lang]/` (`/en/…` y `/es/…`). La raíz `/` redirige según el idioma del navegador.

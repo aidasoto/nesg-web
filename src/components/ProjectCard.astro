@@ -5,7 +5,7 @@
  * Dentro de una rejilla comparte filas con sus vecinas (subgrid) para alinear
  * título, barra, texto y cifras entre tarjetas.
  */
-import { l, localize, useTranslations } from '@/i18n/utils';
+import { asset, l, localize, useTranslations } from '@/i18n/utils';
 import type { Lang } from '@/i18n/ui';
 import { projectStatus, type Project } from '@/lib/data';
 
@@ -26,7 +26,7 @@ const period = `${d.start.getFullYear()}–${d.end?.getFullYear() ?? ''}`;
   </div>
   <span class="card__bar pcard__bar" aria-hidden="true"></span>
   <div class="pcard__desc">
-    {d.logo && <img src={d.logo} alt="" class="pcard__logo" loading="lazy" />}
+    {d.logo && <img src={asset(d.logo)} alt="" class="pcard__logo" loading="lazy" />}
     {d.acronym && <p class="pcard__full">{title}</p>}
     {!d.acronym && title.length > 70 && <p class="pcard__full">{title}</p>}
     {d.summary && <p class="pcard__sum">{localize(d.summary, lang)}</p>}

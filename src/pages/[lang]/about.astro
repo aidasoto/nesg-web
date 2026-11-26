@@ -6,7 +6,7 @@
 import { getCollection, getEntry, render } from 'astro:content';
 import Base from '@/layouts/Base.astro';
 import SectionNav from '@/components/SectionNav.astro';
-import { formatDate, l, langPaths, localize, md, useTranslations } from '@/i18n/utils';
+import { asset, formatDate, l, langPaths, localize, md, useTranslations } from '@/i18n/utils';
 import type { Lang } from '@/i18n/ui';
 import { getPeople, getProjects, getPublications, stats } from '@/lib/data';
 import { site } from '@/config/site';
@@ -107,7 +107,7 @@ const KIND: Record<string, string> = es
         {institutions.map((p, i) => (
           <a class="card card--bar aff__card reveal" href={p.data.url} rel="noopener" style={`transition-delay:${i * 90}ms`}>
             <span class="card__idx aff__idx" aria-hidden="true">/0{i + 1}</span>
-            <div class="aff__logo">{p.data.logo ? <img src={p.data.logo} alt={p.data.name} loading="lazy" /> : <span>{p.data.name}</span>}</div>
+            <div class="aff__logo">{p.data.logo ? <img src={asset(p.data.logo)} alt={p.data.name} loading="lazy" /> : <span>{p.data.name}</span>}</div>
             <h3>{p.data.name}</h3>
             {p.data.url && <span class="aff__url">{p.data.url.replace(/^https?:\/\//, '')} ↗</span>}
           </a>
@@ -146,7 +146,7 @@ const KIND: Record<string, string> = es
         {collaborators.map((p, i) => (
           <article class="card card--bar reveal" style={`transition-delay:${i * 90}ms`}>
             <span class="kicker">{p.data.kind}</span>
-            {p.data.logo && <img class="collab__logo" src={p.data.logo} alt="" loading="lazy" />}
+            {p.data.logo && <img class="collab__logo" src={asset(p.data.logo)} alt="" loading="lazy" />}
             <h3>{p.data.url ? <a href={p.data.url} rel="noopener">{p.data.name}</a> : p.data.name}</h3>
             <p class="small muted">{localize(p.data.collaboration, lang)}</p>
           </article>
@@ -156,7 +156,7 @@ const KIND: Record<string, string> = es
         <>
           <p class="kicker funders__title">{es ? 'Financiación' : 'Funding'}</p>
           <ul class="list-plain funders">
-            {funders.map((p) => <li>{p.data.logo ? <img src={p.data.logo} alt={p.data.name} /> : p.data.name}</li>)}
+            {funders.map((p) => <li>{p.data.logo ? <img src={asset(p.data.logo)} alt={p.data.name} /> : p.data.name}</li>)}
           </ul>
         </>
       )}

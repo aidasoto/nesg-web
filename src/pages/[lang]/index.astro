@@ -14,7 +14,7 @@ import ProjectCard from '@/components/ProjectCard.astro';
 import NewsCard from '@/components/NewsCard.astro';
 import YearStack from '@/components/charts/YearStack.astro';
 import Composition from '@/components/charts/Composition.astro';
-import { formatDate, l, langPaths, useTranslations } from '@/i18n/utils';
+import { asset, formatDate, l, langPaths, useTranslations } from '@/i18n/utils';
 import type { Lang } from '@/i18n/ui';
 import { getImpactFigures, getLines, getNews, getPeople, getProjects, getPublications, lineCounts, projectStatus, stats } from '@/lib/data';
 import { site } from '@/config/site';
@@ -68,7 +68,7 @@ const jsonLd = {
       <div class="hero__bar-left"><ThemeToggle lang={lang} /></div>
       <a class="hero__ugr" href="https://www.ugr.es" rel="noopener" aria-label="Universidad de Granada">
         {ugr?.data.logo
-          ? <img src={ugr.data.logo} alt="Universidad de Granada" class="hero__ugr-img" width="818" height="237" />
+          ? <img src={asset(ugr.data.logo)} alt="Universidad de Granada" class="hero__ugr-img" width="818" height="237" />
           : <span class="hero__ugr-text">Universidad<br />de Granada</span>}
       </a>
       <dl class="hero__feed">
@@ -163,7 +163,7 @@ const jsonLd = {
               {partners.map((p) => (
                 <li>
                   <a href={p.data.url} title={p.data.name} tabindex={copy === 1 ? -1 : undefined} rel="noopener">
-                    {p.data.logo ? <img src={p.data.logo} alt={p.data.name} class="trust__img" loading="lazy" /> : <span class="trust__name">{p.data.name}</span>}
+                    {p.data.logo ? <img src={asset(p.data.logo)} alt={p.data.name} class="trust__img" loading="lazy" /> : <span class="trust__name">{p.data.name}</span>}
                   </a>
                 </li>
               ))}

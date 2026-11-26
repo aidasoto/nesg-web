@@ -1,5 +1,5 @@
 ---
-import { l, useTranslations } from '@/i18n/utils';
+import { asset, l, useTranslations } from '@/i18n/utils';
 import type { Lang } from '@/i18n/ui';
 import { site } from '@/config/site';
 import ThemeToggle from '@/components/ThemeToggle.astro';
@@ -19,10 +19,10 @@ const cols = [
   <div class="container ftr__grid">
     <div class="ftr__brand">
       <a class="ftr__logo" href={l(lang)} aria-label={`${t('site.name')} – ${t('site.fullName')}`}>
-        <span class="ftr__mark" aria-hidden="true"></span>
+        <span class="ftr__mark" aria-hidden="true" style={`--logo:url(${asset('/assets/logos/nesg_logo.png')})`}></span>
       </a>
       <a class="ftr__ugr" href="https://www.ugr.es" rel="noopener" aria-label="Universidad de Granada">
-        <img src="/assets/logos/ugr.svg" alt="Universidad de Granada" width="818" height="237" loading="lazy" />
+        <img src={asset('/assets/logos/ugr.svg')} alt="Universidad de Granada" width="818" height="237" loading="lazy" />
       </a>
     </div>
     <nav aria-label="Footer">
@@ -52,7 +52,7 @@ const cols = [
   .ftr__logo { display: block; color: inherit; }
   .ftr__mark {
     display: block; height: 52px; aspect-ratio: 452 / 121; background: currentColor; transition: background-color .2s;
-    -webkit-mask: url('/assets/logos/nesg_logo.png') center / contain no-repeat; mask: url('/assets/logos/nesg_logo.png') center / contain no-repeat;
+    -webkit-mask: var(--logo) center / contain no-repeat; mask: var(--logo) center / contain no-repeat;
   }
   .ftr__logo:hover .ftr__mark { background: var(--accent); }
   /* Logo UGR: en negativo sobre el pie oscuro, a color en tema claro */

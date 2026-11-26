@@ -1,7 +1,7 @@
 ---
 /** Búsqueda global con Pagefind (índice estático generado tras el build). */
 import Base from '@/layouts/Base.astro';
-import { langPaths, useTranslations } from '@/i18n/utils';
+import { BASE, asset, langPaths, useTranslations } from '@/i18n/utils';
 import type { Lang } from '@/i18n/ui';
 
 export const getStaticPaths = langPaths;
@@ -13,17 +13,17 @@ const t = useTranslations(lang);
   <div class="container section">
     <p class="section-head__idx">// SEARCH</p>
     <h1>{t('nav.search')}</h1>
-    <link href="/pagefind/pagefind-ui.css" rel="stylesheet" />
+    <link href={asset('/pagefind/pagefind-ui.css')} rel="stylesheet" />
     <div id="search"></div>
     <noscript>JavaScript is required for search.</noscript>
   </div>
 </Base>
 
-<script is:inline src="/pagefind/pagefind-ui.js"></script>
-<script is:inline>
+<script is:inline src={asset('/pagefind/pagefind-ui.js')}></script>
+<script is:inline define:vars={{ baseUrl: BASE + '/' }}>
   // Pagefind separa índices por <html lang>, así que solo busca en el idioma actual.
   window.addEventListener('DOMContentLoaded', () => {
     // eslint-disable-next-line no-undef
-    new PagefindUI({ element: '#search', showSubResults: true, autofocus: true });
+    new PagefindUI({ element: '#search', baseUrl, showSubResults: true, autofocus: true });
   });
 </script>

@@ -7,7 +7,7 @@ import PersonCard from '@/components/PersonCard.astro';
 import PubItem from '@/components/PubItem.astro';
 import YearStack from '@/components/charts/YearStack.astro';
 import Timeline from '@/components/charts/Timeline.astro';
-import { formatDate, l, langs, localize, md, useTranslations } from '@/i18n/utils';
+import { asset, formatDate, l, langs, localize, md, useTranslations } from '@/i18n/utils';
 import type { Lang } from '@/i18n/ui';
 import { getPeople, getProjects, getPublications, neighbours, projectStatus, projectTeam, pubsByProject } from '@/lib/data';
 
@@ -68,7 +68,7 @@ const jsonLd = {
         <span class:list={['status', status === 'active' && 'status--active']}>{t(`projects.${status}`)}</span>
         {d.code && <code class="prh__code">{d.code}</code>}
       </div>
-      {d.logo && <img src={d.logo} alt="" class="prh__logo" />}
+      {d.logo && <img src={asset(d.logo)} alt="" class="prh__logo" />}
       {d.acronym && <p class="prh__acr">{d.acronym}</p>}
       <h1>{title}</h1>
     </header>
